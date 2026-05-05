@@ -6,6 +6,7 @@ const healthRoutes = require('./routes/healthRoutes');
 const routeRoutes = require('./routes/routeRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const driverRoutes = require('./routes/driverRoutes');
+const tripRoutes = require('./routes/tripRoutes');
 const errorMiddleware = require('./middlewares/errorMiddleware');
 const notFoundMiddleware = require('./middlewares/notFoundMiddleware');
 
@@ -20,6 +21,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/routes', routeRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/drivers', driverRoutes);
+app.use('/api/trips', tripRoutes);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
