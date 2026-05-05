@@ -1,7 +1,14 @@
 const routeService = require('../services/routeService');
 
 const createRoute = async (req, res) => {
-  const result = await routeService.createRoute(req.body);
+  const { nome, origem, destino } = req.body;
+
+  const result = await routeService.createRoute({
+    nome,
+    origem,
+    destino,
+  });
+
   res.status(201).json(result);
 };
 

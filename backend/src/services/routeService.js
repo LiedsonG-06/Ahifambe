@@ -3,18 +3,16 @@ const AppError = require('../utils/AppError');
 
 const normalizeString = (value) => (typeof value === 'string' ? value.trim() : '');
 
-const createRoute = async ({ nome, origem, destino }) => {
-  const routeData = {
-    nome: normalizeString(nome),
-    origem: normalizeString(origem),
-    destino: normalizeString(destino),
-  };
+const createRoute = async (routeInput) => {
+  const nome = normalizeString(routeInput.nome);
+  const origem = normalizeString(routeInput.origem);
+  const destino = normalizeString(routeInput.destino);
 
-  if (!routeData.nome || !routeData.origem || !routeData.destino) {
-    throw new AppError('Nome, origem and destino are required.', 400);
+  if (!nome || !origem || !destino) {
+    throw new AppError('nome, origem and destino are required.', 400);
   }
 
-  const routeId = await routeModel.create(routeData);
+  const routeId = await routeModel.create({ nome, origem, destino });
   const route = await routeModel.findById(routeId);
 
   return {
