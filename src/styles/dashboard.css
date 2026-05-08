@@ -1,0 +1,46 @@
+.dashboard-page {
+  align-items: center;
+  background:
+    radial-gradient(circle at top right, rgba(246, 195, 67, 0.26), transparent 34%),
+    var(--color-black);
+  display: flex;
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.dashboard-shell {
+  align-items: center;
+  background: var(--color-white);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  display: flex;
+  gap: 2rem;
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: 900px;
+  padding: 2rem;
+  width: 100%;
+}
+
+.dashboard-shell h1 {
+  color: var(--color-black);
+  font-size: clamp(2rem, 6vw, 4rem);
+  letter-spacing: 0;
+  line-height: 1;
+  margin: 0.8rem 0 1rem;
+}
+
+.dashboard-shell p {
+  color: var(--color-muted);
+  font-size: 1.05rem;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+@media (max-width: 720px) {
+  .dashboard-shell {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 1.4rem;
+  }
+}
