@@ -38,6 +38,10 @@ const startTrip = async (tripInput) => {
     throw new AppError('Vehicle not found.', 404);
   }
 
+  if (vehicle.driver_id !== driver_id) {
+    throw new AppError('Vehicle does not belong to this driver.', 400);
+  }
+
   const activeTrip = await tripModel.findInProgressByDriverId(driver_id);
   if (activeTrip) {
     throw new AppError('Driver already has a trip in progress.', 409);
