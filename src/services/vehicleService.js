@@ -10,3 +10,7 @@ export function getVehicles() {
 export function createVehicle(vehicleData) {
   return api.post('/vehicles', vehicleData).then((response) => response.data)
 }
+
+export function updateVehicleStatus(vehicleId, status) {
+  return api.patch(`/vehicles/${vehicleId}/status`, { status }).then((response) => response.data)
+}

@@ -10,5 +10,6 @@ router.use(authenticate);
 
 router.post('/', authorize('admin', 'driver'), asyncHandler(vehicleController.createVehicle));
 router.get('/', authorize('admin', 'driver'), asyncHandler(vehicleController.listVehicles));
+router.patch('/:id/status', authorize('admin', 'driver'), asyncHandler(vehicleController.updateVehicleStatus));
 
 module.exports = router;

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { updateLocation } from '../../services/locationService'
-import { getRoutes } from '../../services/routeService'
+import { createRoute, getRoutes } from '../../services/routeService'
 import { endTrip, startTrip } from '../../services/tripService'
-import { createVehicle, getVehicles } from '../../services/vehicleService'
+import { createVehicle, getVehicles, updateVehicleStatus } from '../../services/vehicleService'
 
 const ACTIVE_TRIP_STORAGE_KEY = 'ahifambe_active_trip'
 const INITIAL_VEHICLE_FORM = {
@@ -11,6 +11,16 @@ const INITIAL_VEHICLE_FORM = {
   model: '',
   capacity: '',
 }
+const INITIAL_ROUTE_FORM = {
+  nome: '',
+  origem: '',
+  destino: '',
+}
+const VEHICLE_STATUS_OPTIONS = [
+  { value: 'active', label: 'Activa' },
+  { value: 'inactive', label: 'Inactiva' },
+  { value: 'maintenance', label: 'Em manutencao' },
+]
 
 function getApiErrorMessage(error) {
   return error?.response?.data?.message || error.message || 'Nao foi possivel concluir a operacao.'
@@ -40,6 +50,14 @@ function formatVehicle(vehicle) {
   return parts.length ? parts.join(' - ') : `Veiculo #${vehicle.id}`
 }
 
+function getVehicleStatusLabel(status) {
+  return VEHICLE_STATUS_OPTIONS.find((option) => option.value === status)?.label || 'Estado desconhecido'
+}
+
+function isVehicleActive(vehicle) {
+  return vehicle?.status === 'active'
+}
+
 function getStatusLabel(activeTrip, isLocationActive) {
   if (activeTrip) {
     return 'Em viagem'
@@ -66,13 +84,22 @@ function DriverDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isVehicleFormOpen, setIsVehicleFormOpen] = useState(false)
   const [isVehicleSaving, setIsVehicleSaving] = useState(false)
+  const [isRouteFormOpen, setIsRouteFormOpen] = useState(false)
+  const [isRouteSaving, setIsRouteSaving] = useState(false)
+  const [statusUpdatingVehicleId, setStatusUpdatingVehicleId] = useState('')
   const [vehicleForm, setVehicleForm] = useState(INITIAL_VEHICLE_FORM)
+  const [routeForm, setRouteForm] = useState(INITIAL_ROUTE_FORM)
   const [isLocationActive, setIsLocationActive] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [locationStatus, setLocationStatus] = useState('')
 
   const driverVehicles = useMemo(() => vehicles, [vehicles])
+  const selectedVehicle = useMemo(
+    () => driverVehicles.find((vehicle) => String(vehicle.id) === String(selectedVehicleId)),
+    [driverVehicles, selectedVehicleId],
+  )
+  const canStartTrip = Boolean(selectedRouteId) && Boolean(selectedVehicleId) && isVehicleActive(selectedVehicle)
 
   const statusLabel = getStatusLabel(activeTrip, isLocationActive)
   const activeTripId = getTripId(activeTrip)
@@ -132,6 +159,12 @@ function DriverDashboard() {
     return vehiclesData
   }
 
+  async function refreshRoutes() {
+    const routesData = await getRoutes()
+    setRoutes(routesData)
+    return routesData
+  }
+
   function handleVehicleInputChange(event) {
     const { name, value } = event.target
     setVehicleForm((currentForm) => ({
@@ -140,9 +173,49 @@ function DriverDashboard() {
     }))
   }
 
+  function handleRouteInputChange(event) {
+    const { name, value } = event.target
+    setRouteForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }))
+  }
+
   function closeVehicleForm() {
     setIsVehicleFormOpen(false)
     setVehicleForm(INITIAL_VEHICLE_FORM)
+  }
+
+  function closeRouteForm() {
+    setIsRouteFormOpen(false)
+    setRouteForm(INITIAL_ROUTE_FORM)
+  }
+
+  async function handleCreateRoute(event) {
+    event.preventDefault()
+    clearMessages()
+    setIsRouteSaving(true)
+
+    try {
+      const result = await createRoute({
+        nome: routeForm.nome.trim(),
+        origem: routeForm.origem.trim(),
+        destino: routeForm.destino.trim(),
+      })
+      closeRouteForm()
+      const routesData = await refreshRoutes()
+      const createdRouteId = result?.route?.id
+
+      if (createdRouteId && routesData.some((route) => Number(route.id) === Number(createdRouteId))) {
+        setSelectedRouteId(String(createdRouteId))
+      }
+
+      setSuccess(result?.message || 'Rota adicionada com sucesso.')
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError))
+    } finally {
+      setIsRouteSaving(false)
+    }
   }
 
   async function handleCreateVehicle(event) {
@@ -175,6 +248,30 @@ function DriverDashboard() {
       setError(getApiErrorMessage(apiError))
     } finally {
       setIsVehicleSaving(false)
+    }
+  }
+
+  async function handleUpdateVehicleStatus(vehicleId, status) {
+    clearMessages()
+    setStatusUpdatingVehicleId(String(vehicleId))
+
+    try {
+      const result = await updateVehicleStatus(vehicleId, status)
+      const vehiclesData = await refreshVehicles()
+
+      if (
+        status !== 'active' &&
+        String(selectedVehicleId) === String(vehicleId) &&
+        vehiclesData.some((vehicle) => String(vehicle.id) === String(vehicleId) && !isVehicleActive(vehicle))
+      ) {
+        setSelectedVehicleId('')
+      }
+
+      setSuccess(result?.message || 'Estado da viatura actualizado com sucesso.')
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError))
+    } finally {
+      setStatusUpdatingVehicleId('')
     }
   }
 
@@ -337,6 +434,24 @@ function DriverDashboard() {
             </select>
           </label>
 
+          <div className="driver-vehicle-summary">
+            <div>
+              <span>Minhas rotas</span>
+              <strong>{routes.length}</strong>
+            </div>
+            <button
+              className="button driver-add-vehicle-button"
+              disabled={isLoading || Boolean(activeTrip)}
+              onClick={() => {
+                clearMessages()
+                setIsRouteFormOpen(true)
+              }}
+              type="button"
+            >
+              Adicionar Rota
+            </button>
+          </div>
+
           <label className="driver-field">
             <span>Veiculo</span>
             <select
@@ -347,8 +462,9 @@ function DriverDashboard() {
             >
               <option value="">Seleccionar veiculo</option>
               {driverVehicles.map((vehicle) => (
-                <option key={vehicle.id} value={vehicle.id}>
+                <option disabled={!isVehicleActive(vehicle)} key={vehicle.id} value={vehicle.id}>
                   {formatVehicle(vehicle)}
+                  {isVehicleActive(vehicle) ? '' : ` - ${getVehicleStatusLabel(vehicle.status)}`}
                 </option>
               ))}
             </select>
@@ -379,10 +495,30 @@ function DriverDashboard() {
           {driverVehicles.length ? (
             <div className="driver-vehicle-list" aria-label="Viaturas do motorista">
               {driverVehicles.map((vehicle) => (
-                <article className="driver-vehicle-card" key={vehicle.id}>
-                  <span>{vehicle.plate_number || 'Sem matricula'}</span>
+                <article
+                  className={`driver-vehicle-card${isVehicleActive(vehicle) ? '' : ' driver-vehicle-card-blocked'}`}
+                  key={vehicle.id}
+                >
+                  <div className="driver-vehicle-card-header">
+                    <span>{vehicle.plate_number || 'Sem matricula'}</span>
+                    <small>{getVehicleStatusLabel(vehicle.status)}</small>
+                  </div>
                   <strong>{vehicle.model || 'Modelo nao informado'}</strong>
                   <small>Capacidade: {vehicle.capacity || 0} passageiros</small>
+                  <label className="driver-vehicle-status-control">
+                    <span>Estado</span>
+                    <select
+                      disabled={statusUpdatingVehicleId === String(vehicle.id)}
+                      onChange={(event) => handleUpdateVehicleStatus(vehicle.id, event.target.value)}
+                      value={vehicle.status || 'active'}
+                    >
+                      {VEHICLE_STATUS_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </article>
               ))}
             </div>
@@ -391,7 +527,7 @@ function DriverDashboard() {
           <div className="driver-actions">
             <button
               className="button"
-              disabled={Boolean(activeTrip) || isSubmitting || !selectedRouteId || !selectedVehicleId}
+              disabled={Boolean(activeTrip) || isSubmitting || !canStartTrip}
               type="submit"
             >
               Iniciar viagem
@@ -513,6 +649,85 @@ function DriverDashboard() {
                 className="button button-secondary"
                 disabled={isVehicleSaving}
                 onClick={closeVehicleForm}
+                type="button"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+
+      {isRouteFormOpen ? (
+        <div className="driver-modal-backdrop" role="presentation">
+          <form
+            aria-labelledby="driver-route-modal-title"
+            className="driver-vehicle-modal"
+            onSubmit={handleCreateRoute}
+            role="dialog"
+          >
+            <div className="driver-panel-header">
+              <div>
+                <span>Nova rota</span>
+                <strong id="driver-route-modal-title">Adicionar Rota</strong>
+              </div>
+              <button
+                aria-label="Fechar formulario"
+                className="driver-modal-close"
+                disabled={isRouteSaving}
+                onClick={closeRouteForm}
+                type="button"
+              >
+                x
+              </button>
+            </div>
+
+            {error ? <div className="driver-error">{error}</div> : null}
+
+            <label className="driver-field">
+              <span>Nome</span>
+              <input
+                autoComplete="off"
+                name="nome"
+                onChange={handleRouteInputChange}
+                placeholder="Baixa - Matola"
+                required
+                value={routeForm.nome}
+              />
+            </label>
+
+            <label className="driver-field">
+              <span>Origem</span>
+              <input
+                autoComplete="off"
+                name="origem"
+                onChange={handleRouteInputChange}
+                placeholder="Baixa"
+                required
+                value={routeForm.origem}
+              />
+            </label>
+
+            <label className="driver-field">
+              <span>Destino</span>
+              <input
+                autoComplete="off"
+                name="destino"
+                onChange={handleRouteInputChange}
+                placeholder="Matola"
+                required
+                value={routeForm.destino}
+              />
+            </label>
+
+            <div className="driver-actions">
+              <button className="button driver-add-vehicle-button" disabled={isRouteSaving} type="submit">
+                {isRouteSaving ? 'A guardar...' : 'Guardar rota'}
+              </button>
+              <button
+                className="button button-secondary"
+                disabled={isRouteSaving}
+                onClick={closeRouteForm}
                 type="button"
               >
                 Cancelar

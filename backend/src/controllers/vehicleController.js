@@ -23,7 +23,18 @@ const listVehicles = async (req, res) => {
   res.status(200).json(vehicles);
 };
 
+const updateVehicleStatus = async (req, res) => {
+  const result = await vehicleService.updateVehicleStatus({
+    vehicleId: req.params.id,
+    status: req.body.status,
+    user: req.user,
+  });
+
+  res.status(200).json(result);
+};
+
 module.exports = {
   createVehicle,
   listVehicles,
+  updateVehicleStatus,
 };

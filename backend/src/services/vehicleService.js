@@ -2,6 +2,8 @@ const vehicleModel = require('../models/vehicleModel');
 const driverModel = require('../models/driverModel');
 const AppError = require('../utils/AppError');
 
+const ALLOWED_VEHICLE_STATUSES = new Set(['active', 'inactive', 'maintenance']);
+
 const normalizeString = (value) => (typeof value === 'string' ? value.trim() : '');
 
 const normalizeDriverId = (value) => {
@@ -80,7 +82,51 @@ const listVehicles = async (user) => {
   return vehicleModel.findAll();
 };
 
+const updateVehicleStatus = async ({ vehicleId, status, user }) => {
+  const normalizedStatus = normalizeString(status).toLowerCase();
+  const normalizedVehicleId = Number(vehicleId);
+
+  if (!Number.isInteger(normalizedVehicleId) || normalizedVehicleId <= 0) {
+    throw new AppError('Valid vehicle id is required.', 400);
+  }
+
+  if (!ALLOWED_VEHICLE_STATUSES.has(normalizedStatus)) {
+    throw new AppError('Invalid vehicle status.', 400);
+  }
+
+  if (!user) {
+    throw new AppError('Authenticated user is required.', 401);
+  }
+
+  const vehicle = await vehicleModel.findById(normalizedVehicleId);
+
+  if (!vehicle) {
+    throw new AppError('Vehicle not found.', 404);
+  }
+
+  if (user.role === 'driver') {
+    const driver = await driverModel.findByUserId(user.id);
+
+    if (!driver) {
+      throw new AppError('Driver profile not found for authenticated user.', 404);
+    }
+
+    if (Number(vehicle.driver_id) !== Number(driver.id)) {
+      throw new AppError('You do not have permission to update this vehicle.', 403);
+    }
+  }
+
+  await vehicleModel.updateStatus(normalizedVehicleId, normalizedStatus);
+  const updatedVehicle = await vehicleModel.findById(normalizedVehicleId);
+
+  return {
+    message: 'Vehicle status updated successfully.',
+    vehicle: updatedVehicle,
+  };
+};
+
 module.exports = {
   createVehicle,
   listVehicles,
+  updateVehicleStatus,
 };

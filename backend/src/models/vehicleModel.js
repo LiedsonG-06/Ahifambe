@@ -53,10 +53,20 @@ const findByDriverId = async (driverId) => {
   return rows;
 };
 
+const updateStatus = async (id, status) => {
+  const [result] = await pool.execute(
+    'UPDATE vehicles SET status = ? WHERE id = ?',
+    [status, id]
+  );
+
+  return result.affectedRows;
+};
+
 module.exports = {
   create,
   findById,
   findByPlateNumber,
   findAll,
   findByDriverId,
+  updateStatus,
 };

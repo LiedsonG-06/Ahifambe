@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.use(authenticate);
 
-router.post('/', authorize('admin'), asyncHandler(routeController.createRoute));
+router.post('/', authorize('admin', 'driver'), asyncHandler(routeController.createRoute));
 router.get('/', authorize('admin', 'passenger', 'driver'), asyncHandler(routeController.listRoutes));
 
 module.exports = router;
