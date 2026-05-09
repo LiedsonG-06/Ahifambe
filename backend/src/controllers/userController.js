@@ -6,12 +6,12 @@ const listUsers = async (req, res) => {
 };
 
 const blockUser = async (req, res) => {
-  const result = await userService.blockUser(req.params.id);
+  const result = await userService.blockUser(req.params.id, req.user.id);
   res.status(200).json(result);
 };
 
 const unblockUser = async (req, res) => {
-  const result = await userService.unblockUser(req.params.id);
+  const result = await userService.unblockUser(req.params.id, req.user.id);
   res.status(200).json(result);
 };
 

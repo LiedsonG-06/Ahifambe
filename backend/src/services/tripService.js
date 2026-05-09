@@ -9,6 +9,12 @@ const normalizeId = (value) => {
 
 const LOTACAO_OPTIONS = new Set(['vazio', 'intermedio', 'lotado']);
 
+const ensureActiveDriver = (driver) => {
+  if (driver.status !== 'active') {
+    throw new AppError('Driver account is not active.', 403);
+  }
+};
+
 const startTrip = async (tripInput) => {
   const route_id = normalizeId(tripInput.route_id);
   const user_id = normalizeId(tripInput.user_id);
@@ -36,12 +42,22 @@ const startTrip = async (tripInput) => {
     throw new AppError('Driver profile not found for authenticated user.', 404);
   }
 
+  ensureActiveDriver(driver);
+
+  if (Number(route.driver_id) !== Number(driver.id)) {
+    throw new AppError('Route does not belong to this driver.', 403);
+  }
+
   const vehicle = await tripModel.findVehicleById(vehicle_id);
   if (!vehicle) {
     throw new AppError('Vehicle not found.', 404);
   }
 
-  if (vehicle.driver_id !== driver.id) {
+  if (vehicle.status !== 'active') {
+    throw new AppError('Vehicle is not active.', 400);
+  }
+
+  if (Number(vehicle.driver_id) !== Number(driver.id)) {
     throw new AppError('Vehicle does not belong to this driver.', 400);
   }
 
@@ -81,7 +97,7 @@ const endTrip = async (idInput, userIdInput) => {
     throw new AppError('Driver profile not found for authenticated user.', 404);
   }
 
-  if (existingTrip.driver_id !== driver.id) {
+  if (Number(existingTrip.driver_id) !== Number(driver.id)) {
     throw new AppError('Driver does not belong to the indicated trip.', 400);
   }
 
@@ -125,7 +141,9 @@ const updateTripStatus = async (idInput, userIdInput, statusInput) => {
     throw new AppError('Driver profile not found for authenticated user.', 404);
   }
 
-  if (existingTrip.driver_id !== driver.id) {
+  ensureActiveDriver(driver);
+
+  if (Number(existingTrip.driver_id) !== Number(driver.id)) {
     throw new AppError('Driver does not belong to the indicated trip.', 400);
   }
 

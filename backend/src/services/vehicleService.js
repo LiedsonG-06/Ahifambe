@@ -15,6 +15,12 @@ const normalizeDriverId = (value) => {
   return Number.isInteger(driverId) && driverId > 0 ? driverId : null;
 };
 
+const ensureActiveDriver = (driver) => {
+  if (driver.status !== 'active') {
+    throw new AppError('Driver account is not active.', 403);
+  }
+};
+
 const createVehicle = async (vehicleInput) => {
   const plate_number = normalizeString(vehicleInput.plate_number);
   const model = normalizeString(vehicleInput.model);
@@ -44,6 +50,8 @@ const createVehicle = async (vehicleInput) => {
     if (!driver) {
       throw new AppError('Driver profile not found for authenticated user.', 404);
     }
+
+    ensureActiveDriver(driver);
 
     driver_id = driver.id;
   }
@@ -110,6 +118,8 @@ const updateVehicleStatus = async ({ vehicleId, status, user }) => {
     if (!driver) {
       throw new AppError('Driver profile not found for authenticated user.', 404);
     }
+
+    ensureActiveDriver(driver);
 
     if (Number(vehicle.driver_id) !== Number(driver.id)) {
       throw new AppError('You do not have permission to update this vehicle.', 403);

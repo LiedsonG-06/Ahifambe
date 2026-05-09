@@ -16,6 +16,12 @@ const normalizeCoordinate = (value) => {
   return Number.isFinite(coordinate) ? coordinate : null;
 };
 
+const ensureActiveDriver = (driver) => {
+  if (driver.status !== 'active') {
+    throw new AppError('Driver account is not active.', 403);
+  }
+};
+
 const updateLocation = async (locationInput) => {
   const trip_id = normalizeId(locationInput.trip_id);
   const user_id = normalizeId(locationInput.user_id);
@@ -48,11 +54,13 @@ const updateLocation = async (locationInput) => {
     throw new AppError('Driver profile not found for authenticated user.', 404);
   }
 
+  ensureActiveDriver(driver);
+
   if (trip.status !== 'in_progress') {
     throw new AppError('Trip must be in progress to update location.', 400);
   }
 
-  if (trip.driver_id !== driver.id) {
+  if (Number(trip.driver_id) !== Number(driver.id)) {
     throw new AppError('Driver does not belong to the indicated trip.', 400);
   }
 

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { blockUser, deleteUser, getUsers, unblockUser } from '../../services/userService'
 import AdminLayout from './AdminLayout'
 import AdminTable from './AdminTable'
 import { formatDate, getApiErrorMessage, valueOrDash } from './adminUtils'
 
 function AdminUsersPage() {
+  const { user: currentUser } = useAuth()
   const [users, setUsers] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [actionUserId, setActionUserId] = useState(null)
@@ -99,7 +101,15 @@ function AdminUsersPage() {
     { key: 'name', label: 'Nome', render: (user) => valueOrDash(user.name) },
     { key: 'email', label: 'Email', render: (user) => valueOrDash(user.email) },
     { key: 'role', label: 'Perfil', render: (user) => valueOrDash(user.role) },
-    { key: 'status', label: 'Estado', render: (user) => valueOrDash(user.status || 'active') },
+    {
+      key: 'status',
+      label: 'Estado',
+      render: (user) => {
+        const status = user.status || 'active'
+
+        return <span className={`admin-status-badge admin-status-${status}`}>{valueOrDash(status)}</span>
+      },
+    },
     { key: 'created_at', label: 'Criado em', render: (user) => formatDate(user.created_at) },
     {
       key: 'actions',
@@ -107,22 +117,24 @@ function AdminUsersPage() {
       render: (user) => {
         const isBusy = actionUserId === user.id
         const status = user.status || 'active'
+        const isCurrentUser = String(currentUser?.id) === String(user.id)
 
         return (
           <div className="admin-table-actions">
             {status === 'active' ? (
               <button
-                className="button button-small"
-                disabled={isBusy}
+                className="button button-small button-danger"
+                disabled={isBusy || isCurrentUser}
                 onClick={() => runUserAction(user, blockUser, 'Utilizador bloqueado com sucesso.')}
                 type="button"
+                title={isCurrentUser ? 'Nao pode bloquear a propria conta' : undefined}
               >
                 Bloquear
               </button>
             ) : null}
             {status === 'blocked' ? (
               <button
-                className="button button-small"
+                className="button button-small button-success"
                 disabled={isBusy}
                 onClick={() =>
                   runUserAction(user, unblockUser, 'Utilizador desbloqueado com sucesso.')

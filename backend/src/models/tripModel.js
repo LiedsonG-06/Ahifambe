@@ -33,7 +33,7 @@ const findById = async (id) => {
 
 const findRouteById = async (routeId) => {
   const [rows] = await pool.execute(
-    'SELECT id FROM routes WHERE id = ? LIMIT 1',
+    'SELECT id, driver_id FROM routes WHERE id = ? LIMIT 1',
     [routeId]
   );
 
@@ -51,7 +51,7 @@ const findDriverById = async (driverId) => {
 
 const findVehicleById = async (vehicleId) => {
   const [rows] = await pool.execute(
-    'SELECT id, driver_id FROM vehicles WHERE id = ? LIMIT 1',
+    'SELECT id, driver_id, status FROM vehicles WHERE id = ? LIMIT 1',
     [vehicleId]
   );
 

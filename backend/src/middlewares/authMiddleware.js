@@ -1,9 +1,13 @@
 const jwt = require('jsonwebtoken');
 
 const env = require('../config/env');
+const userModel = require('../models/userModel');
 const AppError = require('../utils/AppError');
 
-const authenticate = (req, res, next) => {
+const VALID_ROLES = new Set(['admin', 'driver', 'passenger']);
+const BLOCKED_ACCOUNT_MESSAGE = 'A sua conta foi bloqueada. Contacte o administrador do sistema.';
+
+const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -13,9 +17,31 @@ const authenticate = (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    req.user = jwt.verify(token, env.jwt.secret);
+    const decodedUser = jwt.verify(token, env.jwt.secret);
+    const user = await userModel.findById(decodedUser.id);
+
+    if (!user) {
+      return next(new AppError('Authenticated user no longer exists.', 401));
+    }
+
+    if (user.status === 'blocked') {
+      return next(new AppError(BLOCKED_ACCOUNT_MESSAGE, 403));
+    }
+
+    if (!VALID_ROLES.has(user.role)) {
+      return next(new AppError('Authenticated user role is invalid.', 403));
+    }
+
+    req.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    };
+
     return next();
-  } catch (error) {
+  } catch {
     return next(new AppError('Invalid or expired authentication token.', 401));
   }
 };

@@ -10,11 +10,16 @@ const listUsers = async () => {
   return userModel.findAllForAdmin();
 };
 
-const updateUserStatus = async (id, status) => {
+const updateUserStatus = async (id, status, currentUserId) => {
   const userId = normalizeUserId(id);
+  const adminUserId = normalizeUserId(currentUserId);
 
   if (!userId) {
     throw new AppError('User id must be a valid id.', 400);
+  }
+
+  if (status === 'blocked' && adminUserId && userId === adminUserId) {
+    throw new AppError('Nao pode bloquear a propria conta de administrador.', 400);
   }
 
   const hasStatus = await userModel.hasStatusColumn();
@@ -32,16 +37,16 @@ const updateUserStatus = async (id, status) => {
   await userModel.updateStatus(userId, status);
 
   return {
-    message: `User ${status === 'blocked' ? 'blocked' : 'unblocked'} successfully.`,
+    message: `Utilizador ${status === 'blocked' ? 'bloqueado' : 'desbloqueado'} com sucesso.`,
   };
 };
 
-const blockUser = async (id) => {
-  return updateUserStatus(id, 'blocked');
+const blockUser = async (id, currentUserId) => {
+  return updateUserStatus(id, 'blocked', currentUserId);
 };
 
-const unblockUser = async (id) => {
-  return updateUserStatus(id, 'active');
+const unblockUser = async (id, currentUserId) => {
+  return updateUserStatus(id, 'active', currentUserId);
 };
 
 const deleteUser = async (id, currentUserId) => {

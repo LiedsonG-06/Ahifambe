@@ -1,10 +1,10 @@
 const feedbackService = require('../services/feedbackService');
 
 const submitFeedback = async (req, res) => {
-  const { passenger_id, trip_id, rating, comment } = req.body;
+  const { trip_id, rating, comment } = req.body;
 
   const result = await feedbackService.submitFeedback({
-    passenger_id,
+    user_id: req.user.id,
     trip_id,
     rating,
     comment,

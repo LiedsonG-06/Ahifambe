@@ -9,6 +9,8 @@ const { generateToken } = require('../utils/jwt');
 const AppError = require('../utils/AppError');
 
 const VALID_ROLES = ['admin', 'driver', 'passenger'];
+const PUBLIC_REGISTRATION_ROLES = ['driver', 'passenger'];
+const BLOCKED_ACCOUNT_MESSAGE = 'A sua conta foi bloqueada. Contacte o administrador do sistema.';
 
 const sanitizeUser = (user) => ({
   id: user.id,
@@ -28,6 +30,10 @@ const register = async ({ name, email, password, role }) => {
 
   if (!VALID_ROLES.includes(normalizedRole)) {
     throw new AppError('Invalid role. Use admin, driver or passenger.', 400);
+  }
+
+  if (!PUBLIC_REGISTRATION_ROLES.includes(normalizedRole)) {
+    throw new AppError('Public registration of admin accounts is not allowed.', 403);
   }
 
   const existingUser = await userModel.findByEmail(normalizedEmail);
@@ -100,6 +106,10 @@ const login = async ({ email, password }) => {
 
   if (!isPasswordValid) {
     throw new AppError('Invalid email or password.', 401);
+  }
+
+  if (user.status === 'blocked') {
+    throw new AppError(BLOCKED_ACCOUNT_MESSAGE, 403);
   }
 
   const token = generateToken(user);

@@ -75,6 +75,19 @@
   padding: 0.75rem;
 }
 
+.form-error-blocked {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.form-error-blocked strong {
+  color: #7f1d1d;
+}
+
+.form-error-blocked span {
+  color: #991b1b;
+}
+
 .auth-footer {
   color: var(--color-muted);
   margin: 1.4rem 0 0;

@@ -12,7 +12,7 @@ const create = async ({ name, email, passwordHash, role }, connection = pool) =>
 
 const findByEmail = async (email) => {
   const [rows] = await pool.execute(
-    'SELECT id, name, email, password_hash, role, created_at, updated_at FROM users WHERE email = ? LIMIT 1',
+    'SELECT id, name, email, password_hash, role, status, created_at, updated_at FROM users WHERE email = ? LIMIT 1',
     [email]
   );
 
@@ -21,7 +21,7 @@ const findByEmail = async (email) => {
 
 const findById = async (id) => {
   const [rows] = await pool.execute(
-    'SELECT id, name, email, role, created_at, updated_at FROM users WHERE id = ? LIMIT 1',
+    'SELECT id, name, email, role, status, created_at, updated_at FROM users WHERE id = ? LIMIT 1',
     [id]
   );
 

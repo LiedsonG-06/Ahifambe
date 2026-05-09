@@ -13,6 +13,12 @@ const normalizeDriverId = (value) => {
   return Number.isInteger(driverId) && driverId > 0 ? driverId : null;
 };
 
+const ensureActiveDriver = (driver) => {
+  if (driver.status !== 'active') {
+    throw new AppError('Driver account is not active.', 403);
+  }
+};
+
 const createRoute = async (routeInput) => {
   const nome = normalizeString(routeInput.nome);
   const origem = normalizeString(routeInput.origem);
@@ -38,6 +44,8 @@ const createRoute = async (routeInput) => {
     if (!driver) {
       throw new AppError('Driver profile not found for authenticated user.', 404);
     }
+
+    ensureActiveDriver(driver);
 
     driver_id = driver.id;
   } else if (driver_id) {

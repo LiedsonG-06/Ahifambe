@@ -12,13 +12,13 @@ const normalizeRating = (value) => {
 };
 
 const submitFeedback = async (feedbackInput) => {
-  const passenger_id = normalizeId(feedbackInput.passenger_id);
+  const user_id = normalizeId(feedbackInput.user_id);
   const trip_id = normalizeId(feedbackInput.trip_id);
   const rating = normalizeRating(feedbackInput.rating);
   const comment = feedbackInput.comment || null;
 
-  if (!passenger_id) {
-    throw new AppError('passenger_id is required and must be a valid id.', 400);
+  if (!user_id) {
+    throw new AppError('Authenticated user is required.', 401);
   }
 
   if (!trip_id) {
@@ -29,10 +29,12 @@ const submitFeedback = async (feedbackInput) => {
     throw new AppError('rating is required and must be an integer between 1 and 5.', 400);
   }
 
-  const passenger = await feedbackModel.findPassengerById(passenger_id);
+  const passenger = await feedbackModel.findPassengerByUserId(user_id);
   if (!passenger) {
     throw new AppError('Passenger not found.', 404);
   }
+
+  const passenger_id = passenger.id;
 
   const trip = await feedbackModel.findTripById(trip_id);
   if (!trip) {

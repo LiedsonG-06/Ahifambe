@@ -26,6 +26,7 @@ function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const isBlockedAccount = error === 'A sua conta foi bloqueada. Contacte o administrador do sistema.'
 
   if (isAuthenticated) {
     return <Navigate to={getDashboardPath(user.role)} replace />
@@ -95,7 +96,18 @@ function LoginPage() {
             required
           />
 
-          {error && <p className="form-error">{error}</p>}
+          {error && (
+            <div className={isBlockedAccount ? 'form-error form-error-blocked' : 'form-error'}>
+              {isBlockedAccount ? (
+                <>
+                  <strong>Conta bloqueada</strong>
+                  <span>Contacte o administrador do sistema.</span>
+                </>
+              ) : (
+                error
+              )}
+            </div>
+          )}
 
           <button className="button" type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'A entrar...' : 'Login'}

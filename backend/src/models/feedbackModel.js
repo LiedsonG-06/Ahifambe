@@ -36,6 +36,15 @@ const findPassengerById = async (passengerId) => {
   return rows[0] || null;
 };
 
+const findPassengerByUserId = async (userId) => {
+  const [rows] = await pool.execute(
+    'SELECT id, user_id FROM passengers WHERE user_id = ? LIMIT 1',
+    [userId]
+  );
+
+  return rows[0] || null;
+};
+
 const findTripById = async (tripId) => {
   const [rows] = await pool.execute(
     'SELECT id, driver_id, status FROM trips WHERE id = ? LIMIT 1',
@@ -138,6 +147,7 @@ module.exports = {
   create,
   findById,
   findPassengerById,
+  findPassengerByUserId,
   findTripById,
   findDriverById,
   findByPassengerAndTrip,

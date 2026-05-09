@@ -1,13 +1,14 @@
 :root {
-  --color-black: #090909;
-  --color-ink: #171717;
+  --color-black: #0f172a;
+  --color-ink: #172033;
   --color-white: #ffffff;
-  --color-muted: #6f6f6f;
-  --color-line: #e7e2d7;
-  --color-gold: #f6c343;
-  --color-gold-dark: #c89212;
-  --color-soft: #fff8e4;
-  --shadow: 0 24px 70px rgba(0, 0, 0, 0.14);
+  --color-muted: #64748b;
+  --color-line: #e2e8f0;
+  --color-gold: #0ea5e9;
+  --color-gold-dark: #0284c7;
+  --color-green: #22c55e;
+  --color-soft: #f8fafc;
+  --shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
@@ -53,10 +54,11 @@ a {
 
 .button {
   align-items: center;
-  background: var(--color-gold);
-  border: 1px solid var(--color-gold);
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  border: 1px solid #0ea5e9;
   border-radius: 8px;
-  color: var(--color-black);
+  box-shadow: 0 12px 24px rgba(14, 165, 233, 0.2);
+  color: var(--color-white);
   cursor: pointer;
   display: inline-flex;
   font-weight: 800;
@@ -67,12 +69,14 @@ a {
   transition:
     background 180ms ease,
     border-color 180ms ease,
+    box-shadow 180ms ease,
     transform 180ms ease;
 }
 
 .button:hover {
-  background: #ffd45f;
-  border-color: #ffd45f;
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  border-color: #0284c7;
+  box-shadow: 0 16px 30px rgba(14, 165, 233, 0.26);
   transform: translateY(-1px);
 }
 
@@ -83,14 +87,33 @@ a {
 }
 
 .button-secondary {
-  background: var(--color-black);
-  border-color: var(--color-black);
-  color: var(--color-white);
+  background: var(--color-white);
+  border-color: #cbd5e1;
+  box-shadow: none;
+  color: var(--color-black);
 }
 
 .button-secondary:hover {
-  background: #252525;
-  border-color: #252525;
+  background: #f8fafc;
+  border-color: #94a3b8;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.dashboard-page .button-secondary,
+.passenger-page .button-secondary,
+.driver-page .button-secondary,
+.admin-page .button-secondary {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: var(--color-white);
+}
+
+.dashboard-page .button-secondary:hover,
+.passenger-page .button-secondary:hover,
+.driver-page .button-secondary:hover,
+.admin-page .button-secondary:hover {
+  background: #1e293b;
+  border-color: #1e293b;
 }
 
 .button-small {
@@ -105,7 +128,7 @@ a {
 }
 
 .eyebrow {
-  color: var(--color-gold-dark);
+  color: var(--color-gold);
   display: inline-block;
   font-size: 0.8rem;
   font-weight: 900;
@@ -113,9 +136,10 @@ a {
   text-transform: uppercase;
 }
 
+/* Landing Page */
 .landing-page {
   background:
-    linear-gradient(135deg, rgba(246, 195, 67, 0.2), transparent 38%),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.98)),
     var(--color-white);
   min-height: 100vh;
   overflow: hidden;
@@ -127,7 +151,27 @@ a {
   justify-content: space-between;
   margin: 0 auto;
   max-width: 1180px;
-  padding: 1.25rem 1.5rem;
+  padding: 1.1rem 1.5rem;
+}
+
+.landing-nav .brand {
+  align-items: center;
+  color: #0f172a;
+  display: inline-flex;
+  gap: 0.55rem;
+}
+
+.landing-nav .brand::before {
+  background: linear-gradient(135deg, #0ea5e9, #22c55e);
+  border-radius: 8px;
+  content: "";
+  display: inline-block;
+  height: 28px;
+  width: 28px;
+}
+
+.text-link:hover {
+  color: #0ea5e9;
 }
 
 .nav-actions,
@@ -140,18 +184,18 @@ a {
 .landing-hero {
   align-items: center;
   display: grid;
-  gap: 3rem;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+  gap: clamp(2rem, 6vw, 4.5rem);
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.82fr);
   margin: 0 auto;
   max-width: 1180px;
   min-height: calc(100vh - 82px);
-  padding: 2rem 1.5rem 4rem;
+  padding: 2.4rem 1.5rem 4.5rem;
 }
 
 .hero-copy h1 {
   color: var(--color-black);
-  font-size: clamp(3rem, 8vw, 5.9rem);
-  line-height: 0.95;
+  font-size: clamp(2.75rem, 7vw, 5.25rem);
+  line-height: 1;
   letter-spacing: 0;
   margin: 1rem 0;
   max-width: 780px;
@@ -159,35 +203,57 @@ a {
 
 .hero-copy p {
   color: var(--color-muted);
-  font-size: 1.1rem;
+  font-size: 1.08rem;
   line-height: 1.7;
   margin: 0 0 2rem;
   max-width: 620px;
 }
 
 .hero-visual {
+  align-items: center;
+  display: flex;
+  justify-content: center;
   min-height: 520px;
   position: relative;
 }
 
 .hero-visual img {
-  bottom: 0;
-  filter: drop-shadow(0 30px 45px rgba(0, 0, 0, 0.22));
-  height: 160px;
+  display: none;
+}
+
+.hero-visual::before {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.2)),
+    url("../assets/image.png") center / cover no-repeat;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 28px;
+  box-shadow: 0 28px 70px rgba(15, 23, 42, 0.18);
+  content: "";
+  display: block;
+  min-height: 430px;
+  overflow: hidden;
+  width: min(100%, 470px);
+}
+
+.hero-visual::after {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 14px;
+  bottom: 70px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+  color: #0f172a;
+  content: "Rotas activas\a Monitoria em tempo real";
+  font-size: 0.95rem;
+  font-weight: 800;
+  left: 8%;
+  line-height: 1.45;
+  padding: 0.9rem 1rem;
   position: absolute;
-  right: 2rem;
-  width: auto;
+  white-space: pre;
 }
 
 .phone-frame {
-  background: var(--color-black);
-  border-radius: 34px;
-  box-shadow: var(--shadow);
-  inset: 0 1rem auto auto;
-  min-height: 500px;
-  padding: 1rem;
-  position: absolute;
-  width: min(360px, 100%);
+  display: none;
 }
 
 .map-card {
@@ -267,7 +333,7 @@ a {
   .landing-hero {
     grid-template-columns: 1fr;
     min-height: auto;
-    padding: 2.5rem 1rem 3rem;
+    padding: 2rem 1rem 3rem;
   }
 
   .hero-actions {
@@ -276,23 +342,16 @@ a {
   }
 
   .hero-visual {
-    min-height: 420px;
+    min-height: 360px;
   }
 
-  .phone-frame {
-    left: 50%;
-    min-height: 400px;
-    right: auto;
-    transform: translateX(-50%);
-    width: min(330px, 94vw);
+  .hero-visual::before {
+    min-height: 330px;
+    width: min(100%, 520px);
   }
 
-  .map-card {
-    height: 368px;
-  }
-
-  .hero-visual img {
-    height: 110px;
-    right: 1rem;
+  .hero-visual::after {
+    bottom: 32px;
+    left: 1rem;
   }
 }

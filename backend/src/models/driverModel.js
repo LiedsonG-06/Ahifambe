@@ -41,7 +41,7 @@ const findById = async (id) => {
 
 const findByUserId = async (userId) => {
   const [rows] = await pool.execute(
-    'SELECT id, user_id FROM drivers WHERE user_id = ? LIMIT 1',
+    'SELECT id, user_id, status FROM drivers WHERE user_id = ? LIMIT 1',
     [userId]
   );
 
