@@ -1,13 +1,13 @@
 const locationService = require('../services/locationService');
 
 const updateLocation = async (req, res) => {
-  const { trip_id, driver_id, latitude, longitude } = req.body;
+  const { trip_id, latitude, longitude } = req.body;
 
   const result = await locationService.updateLocation({
     trip_id,
-    driver_id,
     latitude,
     longitude,
+    user_id: req.user.id,
   });
 
   res.status(201).json(result);

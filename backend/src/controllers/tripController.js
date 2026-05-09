@@ -1,19 +1,19 @@
 const tripService = require('../services/tripService');
 
 const startTrip = async (req, res) => {
-  const { route_id, driver_id, vehicle_id } = req.body;
+  const { route_id, vehicle_id } = req.body;
 
   const result = await tripService.startTrip({
     route_id,
-    driver_id,
     vehicle_id,
+    user_id: req.user.id,
   });
 
   res.status(201).json(result);
 };
 
 const endTrip = async (req, res) => {
-  const result = await tripService.endTrip(req.params.id);
+  const result = await tripService.endTrip(req.params.id, req.user.id);
   res.status(200).json(result);
 };
 

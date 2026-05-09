@@ -44,9 +44,19 @@ const findAll = async () => {
   return rows;
 };
 
+const findByDriverId = async (driverId) => {
+  const [rows] = await pool.execute(
+    'SELECT id, driver_id, plate_number, model, capacity, status, created_at FROM vehicles WHERE driver_id = ? ORDER BY created_at DESC',
+    [driverId]
+  );
+
+  return rows;
+};
+
 module.exports = {
   create,
   findById,
   findByPlateNumber,
   findAll,
+  findByDriverId,
 };

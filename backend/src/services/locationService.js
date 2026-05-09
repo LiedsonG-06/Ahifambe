@@ -1,4 +1,5 @@
 const locationModel = require('../models/locationModel');
+const driverModel = require('../models/driverModel');
 const AppError = require('../utils/AppError');
 
 const normalizeId = (value) => {
@@ -17,7 +18,7 @@ const normalizeCoordinate = (value) => {
 
 const updateLocation = async (locationInput) => {
   const trip_id = normalizeId(locationInput.trip_id);
-  const driver_id = normalizeId(locationInput.driver_id);
+  const user_id = normalizeId(locationInput.user_id);
   const latitude = normalizeCoordinate(locationInput.latitude);
   const longitude = normalizeCoordinate(locationInput.longitude);
 
@@ -25,8 +26,8 @@ const updateLocation = async (locationInput) => {
     throw new AppError('trip_id is required and must be a valid id.', 400);
   }
 
-  if (!driver_id) {
-    throw new AppError('driver_id is required and must be a valid id.', 400);
+  if (!user_id) {
+    throw new AppError('Authenticated user is required.', 401);
   }
 
   if (latitude === null) {
@@ -42,22 +43,22 @@ const updateLocation = async (locationInput) => {
     throw new AppError('Trip not found.', 404);
   }
 
-  const driver = await locationModel.findDriverById(driver_id);
+  const driver = await driverModel.findByUserId(user_id);
   if (!driver) {
-    throw new AppError('Driver not found.', 404);
+    throw new AppError('Driver profile not found for authenticated user.', 404);
   }
 
   if (trip.status !== 'in_progress') {
     throw new AppError('Trip must be in progress to update location.', 400);
   }
 
-  if (trip.driver_id !== driver_id) {
+  if (trip.driver_id !== driver.id) {
     throw new AppError('Driver does not belong to the indicated trip.', 400);
   }
 
   const locationId = await locationModel.create({
     trip_id,
-    driver_id,
+    driver_id: driver.id,
     latitude,
     longitude,
   });

@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.use(authenticate);
 
-router.post('/', authorize('admin'), asyncHandler(vehicleController.createVehicle));
-router.get('/', authorize('admin'), asyncHandler(vehicleController.listVehicles));
+router.post('/', authorize('admin', 'driver'), asyncHandler(vehicleController.createVehicle));
+router.get('/', authorize('admin', 'driver'), asyncHandler(vehicleController.listVehicles));
 
 module.exports = router;

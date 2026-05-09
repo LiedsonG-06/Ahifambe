@@ -1,4 +1,5 @@
 const tripModel = require('../models/tripModel');
+const driverModel = require('../models/driverModel');
 const AppError = require('../utils/AppError');
 
 const normalizeId = (value) => {
@@ -8,15 +9,15 @@ const normalizeId = (value) => {
 
 const startTrip = async (tripInput) => {
   const route_id = normalizeId(tripInput.route_id);
-  const driver_id = normalizeId(tripInput.driver_id);
+  const user_id = normalizeId(tripInput.user_id);
   const vehicle_id = normalizeId(tripInput.vehicle_id);
 
   if (!route_id) {
     throw new AppError('route_id is required and must be a valid id.', 400);
   }
 
-  if (!driver_id) {
-    throw new AppError('driver_id is required and must be a valid id.', 400);
+  if (!user_id) {
+    throw new AppError('Authenticated user is required.', 401);
   }
 
   if (!vehicle_id) {
@@ -28,9 +29,9 @@ const startTrip = async (tripInput) => {
     throw new AppError('Route not found.', 404);
   }
 
-  const driver = await tripModel.findDriverById(driver_id);
+  const driver = await driverModel.findByUserId(user_id);
   if (!driver) {
-    throw new AppError('Driver not found.', 404);
+    throw new AppError('Driver profile not found for authenticated user.', 404);
   }
 
   const vehicle = await tripModel.findVehicleById(vehicle_id);
@@ -38,16 +39,16 @@ const startTrip = async (tripInput) => {
     throw new AppError('Vehicle not found.', 404);
   }
 
-  if (vehicle.driver_id !== driver_id) {
+  if (vehicle.driver_id !== driver.id) {
     throw new AppError('Vehicle does not belong to this driver.', 400);
   }
 
-  const activeTrip = await tripModel.findInProgressByDriverId(driver_id);
+  const activeTrip = await tripModel.findInProgressByDriverId(driver.id);
   if (activeTrip) {
     throw new AppError('Driver already has a trip in progress.', 409);
   }
 
-  const tripId = await tripModel.create({ route_id, driver_id, vehicle_id });
+  const tripId = await tripModel.create({ route_id, driver_id: driver.id, vehicle_id });
   const trip = await tripModel.findById(tripId);
 
   return {
@@ -56,16 +57,30 @@ const startTrip = async (tripInput) => {
   };
 };
 
-const endTrip = async (idInput) => {
+const endTrip = async (idInput, userIdInput) => {
   const id = normalizeId(idInput);
+  const user_id = normalizeId(userIdInput);
 
   if (!id) {
     throw new AppError('Trip id must be a valid id.', 400);
   }
 
+  if (!user_id) {
+    throw new AppError('Authenticated user is required.', 401);
+  }
+
   const existingTrip = await tripModel.findById(id);
   if (!existingTrip) {
     throw new AppError('Trip not found.', 404);
+  }
+
+  const driver = await driverModel.findByUserId(user_id);
+  if (!driver) {
+    throw new AppError('Driver profile not found for authenticated user.', 404);
+  }
+
+  if (existingTrip.driver_id !== driver.id) {
+    throw new AppError('Driver does not belong to the indicated trip.', 400);
   }
 
   if (existingTrip.status !== 'in_progress') {

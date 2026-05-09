@@ -9,6 +9,6 @@ const router = express.Router();
 router.use(authenticate);
 
 router.post('/', authorize('admin'), asyncHandler(routeController.createRoute));
-router.get('/', authorize('admin', 'passenger'), asyncHandler(routeController.listRoutes));
+router.get('/', authorize('admin', 'passenger', 'driver'), asyncHandler(routeController.listRoutes));
 
 module.exports = router;
