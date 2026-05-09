@@ -45,6 +45,271 @@
   }
 }
 
+.passenger-page {
+  background: #f6f4ef;
+  display: grid;
+  gap: 1rem;
+  min-height: 100vh;
+  padding: 1.25rem;
+}
+
+.passenger-header,
+.passenger-toolbar,
+.passenger-panel,
+.passenger-map-panel,
+.passenger-error {
+  background: var(--color-white);
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.07);
+}
+
+.passenger-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 1.5rem;
+  justify-content: space-between;
+  padding: 1.4rem;
+}
+
+.passenger-header h1 {
+  color: var(--color-black);
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 1;
+  margin: 0.65rem 0 0.75rem;
+}
+
+.passenger-header p {
+  color: var(--color-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.passenger-header-actions {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.passenger-live-status {
+  background: #eaf7ef;
+  border: 1px solid #a8d8b9;
+  border-radius: 999px;
+  color: #1f7a3d;
+  font-size: 0.84rem;
+  font-weight: 900;
+  padding: 0.45rem 0.75rem;
+}
+
+.passenger-error {
+  border-color: #f3b4a6;
+  color: #9f2d14;
+  font-weight: 800;
+  padding: 1rem 1.2rem;
+}
+
+.passenger-toolbar {
+  align-items: end;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(260px, 1fr) auto minmax(220px, auto);
+  padding: 1rem;
+}
+
+.passenger-field,
+.passenger-location-state {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.passenger-field span,
+.passenger-location-state span,
+.passenger-route span,
+.passenger-chapa-card span,
+.passenger-chapa-card small {
+  color: var(--color-muted);
+  font-weight: 800;
+}
+
+.passenger-field select {
+  background: var(--color-white);
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  color: var(--color-black);
+  min-height: 48px;
+  padding: 0.75rem 0.85rem;
+  width: 100%;
+}
+
+.passenger-field select:focus {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 3px rgba(246, 195, 67, 0.2);
+  outline: 0;
+}
+
+.passenger-location-state {
+  background: var(--color-black);
+  border-radius: 8px;
+  color: var(--color-white);
+  padding: 0.75rem 0.9rem;
+}
+
+.passenger-location-state span {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.passenger-location-state strong {
+  color: var(--color-white);
+}
+
+.passenger-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(240px, 0.72fr) minmax(420px, 1.6fr) minmax(260px, 0.8fr);
+}
+
+.passenger-panel {
+  align-content: start;
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+}
+
+.passenger-panel-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.passenger-panel-header div {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.passenger-panel-header strong {
+  color: var(--color-black);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.passenger-route-list,
+.passenger-chapa-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.passenger-route,
+.passenger-chapa-card,
+.passenger-state {
+  background: #fffaf0;
+  border: 1px solid #f0d896;
+  border-radius: 8px;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem;
+}
+
+.passenger-route {
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.passenger-route:hover,
+.passenger-route.active {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+}
+
+.passenger-route strong,
+.passenger-chapa-card strong {
+  color: var(--color-black);
+}
+
+.passenger-map-panel {
+  min-height: 400px;
+  overflow: hidden;
+}
+
+.passenger-map {
+  height: 100%;
+  min-height: 400px;
+  width: 100%;
+}
+
+.passenger-popup {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 180px;
+}
+
+.passenger-popup strong {
+  color: var(--color-black);
+}
+
+.passenger-popup span {
+  color: var(--color-muted);
+}
+
+.passenger-state {
+  background: var(--color-white);
+  border-color: var(--color-line);
+  color: var(--color-muted);
+  font-weight: 800;
+}
+
+.passenger-chapa-card {
+  background: var(--color-white);
+  border-color: var(--color-line);
+}
+
+.passenger-chapa-card p {
+  color: var(--color-muted);
+  line-height: 1.45;
+  margin: 0.2rem 0 0;
+}
+
+@media (max-width: 1120px) {
+  .passenger-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .passenger-map-panel {
+    min-height: 460px;
+    order: -1;
+  }
+
+  .passenger-chapa-list,
+  .passenger-route-list {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .passenger-page {
+    padding: 1rem;
+  }
+
+  .passenger-header,
+  .passenger-toolbar {
+    display: grid;
+  }
+
+  .passenger-header-actions {
+    align-items: stretch;
+  }
+
+  .passenger-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .passenger-map-panel,
+  .passenger-map {
+    min-height: 400px;
+  }
+}
+
 .driver-page {
   background: #f5f2ea;
   display: grid;
