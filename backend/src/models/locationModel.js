@@ -60,6 +60,8 @@ const findLatestActiveByDriver = async () => {
       l.recorded_at,
       t.id AS trip_id,
       t.driver_id,
+      t.status,
+      t.lotacao,
       r.nome AS route_nome,
       r.origem,
       r.destino,

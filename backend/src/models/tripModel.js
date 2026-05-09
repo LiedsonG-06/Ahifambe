@@ -19,6 +19,7 @@ const findById = async (id) => {
       departure_time,
       arrival_time,
       status,
+      lotacao,
       created_at,
       updated_at
     FROM trips
@@ -73,11 +74,19 @@ const complete = async (id) => {
   );
 };
 
+const updateLotacao = async (id, lotacao) => {
+  await pool.execute(
+    "UPDATE trips SET lotacao = ? WHERE id = ? AND status = 'in_progress'",
+    [lotacao, id]
+  );
+};
+
 const findActive = async () => {
   const [rows] = await pool.execute(
     `SELECT
       t.id,
       t.status,
+      t.lotacao,
       t.departure_time,
       r.nome AS route_nome,
       r.origem,
@@ -109,6 +118,7 @@ const findAll = async () => {
       t.departure_time,
       t.arrival_time,
       t.status,
+      t.lotacao,
       t.created_at,
       t.updated_at,
       r.nome AS route_nome,
@@ -138,6 +148,7 @@ module.exports = {
   findVehicleById,
   findInProgressByDriverId,
   complete,
+  updateLotacao,
   findActive,
   findAll,
 };

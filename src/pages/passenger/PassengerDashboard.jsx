@@ -9,12 +9,30 @@ import { getActiveLocations } from '../../services/locationService'
 import { getRoutes } from '../../services/routeService'
 
 const MAPUTO_CENTER = [-25.9655, 32.5832]
+const LOTACAO_OPTIONS = {
+  vazio: { label: 'Vazio', markerClass: 'passenger-marker-vazio' },
+  intermedio: { label: 'Intermedio', markerClass: 'passenger-marker-intermedio' },
+  lotado: { label: 'Lotado', markerClass: 'passenger-marker-lotado' },
+}
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
   iconUrl: markerIcon,
   shadowUrl: markerShadow,
 })
+
+const LOTACAO_ICONS = Object.fromEntries(
+  Object.entries(LOTACAO_OPTIONS).map(([value, option]) => [
+    value,
+    L.divIcon({
+      className: `passenger-marker ${option.markerClass}`,
+      html: '<span></span>',
+      iconAnchor: [12, 24],
+      iconSize: [24, 24],
+      popupAnchor: [0, -24],
+    }),
+  ]),
+)
 
 function normalizeRouteId(route) {
   return String(route.id ?? route.route_id ?? route.routeId ?? route.nome ?? route.name ?? '')
@@ -24,7 +42,27 @@ function normalizeRouteName(route) {
   return route.nome ?? route.name ?? route.route_nome ?? 'Rota sem nome'
 }
 
+function normalizeLotacao(value) {
+  const lotacao = String(value || '').trim().toLowerCase()
+  return LOTACAO_OPTIONS[lotacao] ? lotacao : 'vazio'
+}
+
+function getLotacaoLabel(value) {
+  return LOTACAO_OPTIONS[normalizeLotacao(value)].label
+}
+
+function formatLastUpdate(value) {
+  if (!value) {
+    return 'Sem actualizacao'
+  }
+
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? 'Sem actualizacao' : date.toLocaleTimeString()
+}
+
 function normalizeActiveLocation(location) {
+  const lotacao = normalizeLotacao(location.lotacao ?? location.status_lotacao)
+
   return {
     ...location,
     latitude: Number(location.latitude),
@@ -32,6 +70,8 @@ function normalizeActiveLocation(location) {
     routeId: String(location.route_id ?? location.routeId ?? location.route_nome ?? ''),
     routeName: location.route_nome ?? location.nome ?? location.route_name ?? 'Rota sem nome',
     status: location.status ?? location.trip_status ?? location.viagem_status ?? 'in_progress',
+    lotacao,
+    lotacaoLabel: getLotacaoLabel(lotacao),
   }
 }
 
@@ -241,16 +281,21 @@ function PassengerDashboard() {
             {filteredLocations.map((location) => (
               <Marker
                 key={`${location.trip_id}-${location.driver_id}-${location.latitude}-${location.longitude}`}
+                icon={LOTACAO_ICONS[location.lotacao]}
                 position={[location.latitude, location.longitude]}
               >
                 <Popup>
                   <div className="passenger-popup">
                     <strong>{location.routeName}</strong>
                     <span>
-                      {location.origem ?? 'Origem nao definida'} para {location.destino ?? 'Destino nao definido'}
+                      Origem: {location.origem ?? 'Origem nao definida'}
                     </span>
+                    <span>Destino: {location.destino ?? 'Destino nao definido'}</span>
                     <span>Matricula: {location.plate_number ?? 'Nao informada'}</span>
                     <span>Modelo: {location.model ?? 'Nao informado'}</span>
+                    <span className={`passenger-lotacao passenger-lotacao-${location.lotacao}`}>
+                      Lotacao: {location.lotacaoLabel}
+                    </span>
                   </div>
                 </Popup>
               </Marker>
@@ -278,9 +323,13 @@ function PassengerDashboard() {
                 <span>{location.routeName}</span>
                 <strong>{location.plate_number ?? 'Matricula nao informada'}</strong>
                 <small>{location.model ?? 'Modelo nao informado'}</small>
+                <small className={`passenger-lotacao passenger-lotacao-${location.lotacao}`}>
+                  Lotacao: {location.lotacaoLabel}
+                </small>
                 <p>
                   {location.origem ?? 'Origem nao definida'} para {location.destino ?? 'Destino nao definido'}
                 </p>
+                <small>Ultima actualizacao: {formatLastUpdate(location.recorded_at)}</small>
               </article>
             ))}
           </div>

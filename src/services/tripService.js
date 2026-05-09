@@ -7,3 +7,7 @@ export function startTrip({ route_id, vehicle_id }) {
 export function endTrip(id) {
   return api.patch(`/trips/${id}/end`).then((response) => response.data)
 }
+
+export function updateTripStatus(id, { lotacao }) {
+  return api.patch(`/trips/${id}/status`, { lotacao }).then((response) => response.data)
+}

@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS trips (
   departure_time DATETIME,
   arrival_time DATETIME,
   status ENUM('scheduled', 'in_progress', 'completed', 'cancelled') NOT NULL DEFAULT 'scheduled',
+  lotacao ENUM('vazio', 'intermedio', 'lotado') NOT NULL DEFAULT 'vazio',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_trips_route FOREIGN KEY (route_id) REFERENCES routes(id),

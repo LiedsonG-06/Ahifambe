@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { updateLocation } from '../../services/locationService'
 import { createRoute, getRoutes } from '../../services/routeService'
-import { endTrip, startTrip } from '../../services/tripService'
+import { endTrip, startTrip, updateTripStatus } from '../../services/tripService'
 import { createVehicle, getVehicles, updateVehicleStatus } from '../../services/vehicleService'
 
 const ACTIVE_TRIP_STORAGE_KEY = 'ahifambe_active_trip'
@@ -20,6 +20,11 @@ const VEHICLE_STATUS_OPTIONS = [
   { value: 'active', label: 'Activa' },
   { value: 'inactive', label: 'Inactiva' },
   { value: 'maintenance', label: 'Em manutencao' },
+]
+const LOTACAO_OPTIONS = [
+  { value: 'vazio', label: 'Vazio' },
+  { value: 'intermedio', label: 'Intermedio' },
+  { value: 'lotado', label: 'Lotado' },
 ]
 
 function getApiErrorMessage(error) {
@@ -70,6 +75,10 @@ function getStatusLabel(activeTrip, isLocationActive) {
   return 'Offline'
 }
 
+function getLotacaoLabel(value) {
+  return LOTACAO_OPTIONS.find((option) => option.value === value)?.label || 'Vazio'
+}
+
 function DriverDashboard() {
   const { logout, user } = useAuth()
   const watcherIdRef = useRef(null)
@@ -84,6 +93,7 @@ function DriverDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isVehicleFormOpen, setIsVehicleFormOpen] = useState(false)
   const [isVehicleSaving, setIsVehicleSaving] = useState(false)
+  const [isTripStatusSaving, setIsTripStatusSaving] = useState(false)
   const [isRouteFormOpen, setIsRouteFormOpen] = useState(false)
   const [isRouteSaving, setIsRouteSaving] = useState(false)
   const [statusUpdatingVehicleId, setStatusUpdatingVehicleId] = useState('')
@@ -103,6 +113,7 @@ function DriverDashboard() {
 
   const statusLabel = getStatusLabel(activeTrip, isLocationActive)
   const activeTripId = getTripId(activeTrip)
+  const activeTripLotacao = activeTrip?.lotacao || 'vazio'
 
   useEffect(() => {
     activeTripRef.current = activeTrip
@@ -326,6 +337,27 @@ function DriverDashboard() {
       setError(getApiErrorMessage(apiError))
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  async function handleUpdateTripLotacao(lotacao) {
+    clearMessages()
+
+    if (!activeTripId) {
+      setError('Inicie uma viagem antes de actualizar a lotacao.')
+      return
+    }
+
+    setIsTripStatusSaving(true)
+
+    try {
+      const result = await updateTripStatus(activeTripId, { lotacao })
+      setActiveTrip(result.trip)
+      setSuccess(result?.message || 'Lotacao actualizada com sucesso.')
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError))
+    } finally {
+      setIsTripStatusSaving(false)
     }
   }
 
@@ -553,6 +585,31 @@ function DriverDashboard() {
             <span>Viagem activa</span>
             <strong>{activeTripId ? `#${activeTripId}` : 'Nenhuma'}</strong>
             <small>Status: {activeTrip?.status || completedTrip?.status || 'offline'}</small>
+            <small>Lotacao: {activeTrip ? getLotacaoLabel(activeTripLotacao) : 'Indisponivel'}</small>
+          </div>
+
+          <div className="driver-trip-card">
+            <span>Lotacao do transporte</span>
+            <div className="driver-lotacao-actions">
+              {LOTACAO_OPTIONS.map((option) => (
+                <button
+                  className={`driver-lotacao-button driver-lotacao-${option.value}${
+                    activeTrip && activeTripLotacao === option.value ? ' active' : ''
+                  }`}
+                  disabled={!activeTrip || isTripStatusSaving}
+                  key={option.value}
+                  onClick={() => handleUpdateTripLotacao(option.value)}
+                  type="button"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <small>
+              {activeTrip
+                ? 'Disponivel apenas durante uma viagem activa.'
+                : 'Inicie uma viagem para alterar a lotacao.'}
+            </small>
           </div>
 
           {locationStatus ? <div className="driver-state">{locationStatus}</div> : null}

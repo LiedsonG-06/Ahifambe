@@ -10,6 +10,7 @@ router.use(authenticate);
 
 router.post('/start', authorize('driver'), asyncHandler(tripController.startTrip));
 router.patch('/:id/end', authorize('driver'), asyncHandler(tripController.endTrip));
+router.patch('/:id/status', authorize('driver'), asyncHandler(tripController.updateTripStatus));
 router.get('/active', authorize('admin', 'passenger'), asyncHandler(tripController.listActiveTrips));
 router.get('/', authorize('admin'), asyncHandler(tripController.listTrips));
 

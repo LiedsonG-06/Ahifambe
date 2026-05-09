@@ -7,6 +7,8 @@ const normalizeId = (value) => {
   return Number.isInteger(id) && id > 0 ? id : null;
 };
 
+const LOTACAO_OPTIONS = new Set(['vazio', 'intermedio', 'lotado']);
+
 const startTrip = async (tripInput) => {
   const route_id = normalizeId(tripInput.route_id);
   const user_id = normalizeId(tripInput.user_id);
@@ -96,6 +98,50 @@ const endTrip = async (idInput, userIdInput) => {
   };
 };
 
+const updateTripStatus = async (idInput, userIdInput, statusInput) => {
+  const id = normalizeId(idInput);
+  const user_id = normalizeId(userIdInput);
+  const lotacao = String(statusInput?.lotacao || '').trim().toLowerCase();
+
+  if (!id) {
+    throw new AppError('Trip id must be a valid id.', 400);
+  }
+
+  if (!user_id) {
+    throw new AppError('Authenticated user is required.', 401);
+  }
+
+  if (!LOTACAO_OPTIONS.has(lotacao)) {
+    throw new AppError('lotacao must be one of: vazio, intermedio, lotado.', 400);
+  }
+
+  const existingTrip = await tripModel.findById(id);
+  if (!existingTrip) {
+    throw new AppError('Trip not found.', 404);
+  }
+
+  const driver = await driverModel.findByUserId(user_id);
+  if (!driver) {
+    throw new AppError('Driver profile not found for authenticated user.', 404);
+  }
+
+  if (existingTrip.driver_id !== driver.id) {
+    throw new AppError('Driver does not belong to the indicated trip.', 400);
+  }
+
+  if (existingTrip.status !== 'in_progress') {
+    throw new AppError('Only trips in progress can update lotacao.', 400);
+  }
+
+  await tripModel.updateLotacao(id, lotacao);
+  const trip = await tripModel.findById(id);
+
+  return {
+    message: 'Trip status updated successfully.',
+    trip,
+  };
+};
+
 const listActiveTrips = async () => {
   return tripModel.findActive();
 };
@@ -107,6 +153,7 @@ const listTrips = async () => {
 module.exports = {
   startTrip,
   endTrip,
+  updateTripStatus,
   listActiveTrips,
   listTrips,
 };
