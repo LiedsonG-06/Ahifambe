@@ -92,3 +92,22 @@ CREATE TABLE IF NOT EXISTS feedback (
   CONSTRAINT fk_feedback_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE SET NULL,
   CONSTRAINT chk_feedback_rating CHECK (rating IS NULL OR rating BETWEEN 1 AND 5)
 );
+
+CREATE TABLE IF NOT EXISTS ride_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  passenger_id INT NOT NULL,
+  driver_id INT NOT NULL,
+  trip_id INT NOT NULL,
+  passenger_latitude DECIMAL(10, 8) NOT NULL,
+  passenger_longitude DECIMAL(11, 8) NOT NULL,
+  destination VARCHAR(160) NOT NULL,
+  people_count INT NOT NULL DEFAULT 1,
+  note TEXT NULL,
+  status ENUM('pending', 'accepted', 'rejected') NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_ride_requests_passenger FOREIGN KEY (passenger_id) REFERENCES passengers(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ride_requests_driver FOREIGN KEY (driver_id) REFERENCES drivers(id) ON DELETE CASCADE,
+  CONSTRAINT fk_ride_requests_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE,
+  CONSTRAINT chk_ride_requests_people_count CHECK (people_count > 0)
+);

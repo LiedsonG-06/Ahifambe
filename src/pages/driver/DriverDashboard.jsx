@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { updateLocation } from '../../services/locationService'
+import { acceptRideRequest, getDriverRideRequests, rejectRideRequest } from '../../services/rideRequestService'
 import { createRoute, getRoutes } from '../../services/routeService'
 import { endTrip, startTrip, updateTripStatus } from '../../services/tripService'
 import { createVehicle, getVehicles, updateVehicleStatus } from '../../services/vehicleService'
@@ -79,6 +80,16 @@ function getLotacaoLabel(value) {
   return LOTACAO_OPTIONS.find((option) => option.value === value)?.label || 'Vazio'
 }
 
+function getRideRequestStatusLabel(status) {
+  const labels = {
+    pending: 'Pendente',
+    accepted: 'Aceite',
+    rejected: 'Recusado',
+  }
+
+  return labels[status] || status || 'Desconhecido'
+}
+
 function DriverDashboard() {
   const { logout, user } = useAuth()
   const watcherIdRef = useRef(null)
@@ -103,6 +114,9 @@ function DriverDashboard() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [locationStatus, setLocationStatus] = useState('')
+  const [rideRequests, setRideRequests] = useState([])
+  const [isRideRequestsLoading, setIsRideRequestsLoading] = useState(true)
+  const [updatingRideRequestId, setUpdatingRideRequestId] = useState('')
 
   const driverVehicles = useMemo(() => vehicles, [vehicles])
   const selectedVehicle = useMemo(
@@ -152,6 +166,36 @@ function DriverDashboard() {
   }, [])
 
   useEffect(() => {
+    let isMounted = true
+
+    async function loadRideRequests() {
+      try {
+        const requests = await getDriverRideRequests()
+
+        if (isMounted) {
+          setRideRequests(requests)
+        }
+      } catch (apiError) {
+        if (isMounted) {
+          setError(getApiErrorMessage(apiError))
+        }
+      } finally {
+        if (isMounted) {
+          setIsRideRequestsLoading(false)
+        }
+      }
+    }
+
+    loadRideRequests()
+    const intervalId = window.setInterval(loadRideRequests, 5000)
+
+    return () => {
+      isMounted = false
+      window.clearInterval(intervalId)
+    }
+  }, [])
+
+  useEffect(() => {
     return () => {
       if (watcherIdRef.current !== null) {
         navigator.geolocation.clearWatch(watcherIdRef.current)
@@ -174,6 +218,12 @@ function DriverDashboard() {
     const routesData = await getRoutes()
     setRoutes(routesData)
     return routesData
+  }
+
+  async function refreshRideRequests() {
+    const requests = await getDriverRideRequests()
+    setRideRequests(requests)
+    return requests
   }
 
   function handleVehicleInputChange(event) {
@@ -420,6 +470,21 @@ function DriverDashboard() {
     stopLocationTracking()
   }
 
+  async function handleRideRequestAction(requestId, action) {
+    clearMessages()
+    setUpdatingRideRequestId(String(requestId))
+
+    try {
+      const result = action === 'accept' ? await acceptRideRequest(requestId) : await rejectRideRequest(requestId)
+      await refreshRideRequests()
+      setSuccess(result?.message || 'Pedido actualizado com sucesso.')
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError))
+    } finally {
+      setUpdatingRideRequestId('')
+    }
+  }
+
   return (
     <main className="driver-page">
       <header className="driver-header">
@@ -633,6 +698,71 @@ function DriverDashboard() {
             </button>
           </div>
         </section>
+      </section>
+
+      <section className="driver-panel driver-requests-panel">
+        <div className="driver-panel-header">
+          <div>
+            <span>Pedidos de Passageiros</span>
+            <strong>{rideRequests.length}</strong>
+          </div>
+        </div>
+
+        {isRideRequestsLoading ? <div className="driver-state">A carregar pedidos...</div> : null}
+
+        {!isRideRequestsLoading && rideRequests.length === 0 ? (
+          <div className="driver-state">Nenhum pedido pendente ou aceite.</div>
+        ) : null}
+
+        {rideRequests.length ? (
+          <div className="driver-request-list">
+            {rideRequests.map((request) => (
+              <article className="driver-request-card" key={request.id}>
+                <div className="driver-request-card-header">
+                  <div>
+                    <span>Passageiro</span>
+                    <strong>{request.passenger_name || 'Passageiro'}</strong>
+                    <small>{request.passenger_email || 'Email nao informado'}</small>
+                  </div>
+                  <small className={`driver-request-status driver-request-status-${request.status}`}>
+                    {getRideRequestStatusLabel(request.status)}
+                  </small>
+                </div>
+
+                <div className="driver-request-details">
+                  <span>Destino: {request.destination}</span>
+                  <span>Pessoas: {request.people_count}</span>
+                  <span>Observacao: {request.note || 'Sem observacao'}</span>
+                  <span>
+                    Coordenadas: {request.passenger_latitude}, {request.passenger_longitude}
+                  </span>
+                  <span>Viagem: #{request.trip_id}</span>
+                </div>
+
+                {request.status === 'pending' ? (
+                  <div className="driver-actions">
+                    <button
+                      className="button button-success"
+                      disabled={updatingRideRequestId === String(request.id)}
+                      onClick={() => handleRideRequestAction(request.id, 'accept')}
+                      type="button"
+                    >
+                      Aceitar
+                    </button>
+                    <button
+                      className="button button-danger"
+                      disabled={updatingRideRequestId === String(request.id)}
+                      onClick={() => handleRideRequestAction(request.id, 'reject')}
+                      type="button"
+                    >
+                      Recusar
+                    </button>
+                  </div>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       {isVehicleFormOpen ? (

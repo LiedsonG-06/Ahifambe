@@ -6,9 +6,15 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 import { useAuth } from '../../context/AuthContext'
 import { getActiveLocations } from '../../services/locationService'
+import { createRideRequest } from '../../services/rideRequestService'
 import { getRoutes } from '../../services/routeService'
 
 const MAPUTO_CENTER = [-25.9655, 32.5832]
+const INITIAL_RIDE_REQUEST_FORM = {
+  destination: '',
+  people_count: '1',
+  note: '',
+}
 const LOTACAO_OPTIONS = {
   vazio: { label: 'Vazio', markerClass: 'passenger-marker-vazio' },
   intermedio: { label: 'Intermedio', markerClass: 'passenger-marker-intermedio' },
@@ -60,6 +66,16 @@ function formatLastUpdate(value) {
   return Number.isNaN(date.getTime()) ? 'Sem actualizacao' : date.toLocaleTimeString()
 }
 
+function getCurrentPosition() {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      maximumAge: 10000,
+      timeout: 15000,
+    })
+  })
+}
+
 function normalizeActiveLocation(location) {
   const lotacao = normalizeLotacao(location.lotacao ?? location.status_lotacao)
 
@@ -94,6 +110,20 @@ function MapBounds({ locations }) {
   return null
 }
 
+function RequestModalMapResize() {
+  const map = useMap()
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      map.invalidateSize()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [map])
+
+  return null
+}
+
 function PassengerDashboard() {
   const { logout, user } = useAuth()
   const [routes, setRoutes] = useState([])
@@ -102,7 +132,11 @@ function PassengerDashboard() {
   const [loadingRoutes, setLoadingRoutes] = useState(true)
   const [loadingLocations, setLoadingLocations] = useState(true)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [lastUpdated, setLastUpdated] = useState(null)
+  const [selectedRideLocation, setSelectedRideLocation] = useState(null)
+  const [rideRequestForm, setRideRequestForm] = useState(INITIAL_RIDE_REQUEST_FORM)
+  const [isRideRequestSubmitting, setIsRideRequestSubmitting] = useState(false)
 
   const loadRoutes = useCallback(async () => {
     setLoadingRoutes(true)
@@ -197,6 +231,73 @@ function PassengerDashboard() {
 
   const isLoading = loadingRoutes || loadingLocations
 
+  function openRideRequestForm(location) {
+    setError('')
+    setSuccess('')
+    setSelectedRideLocation(location)
+    setRideRequestForm({
+      ...INITIAL_RIDE_REQUEST_FORM,
+      destination: location.destino ?? '',
+    })
+  }
+
+  function closeRideRequestForm() {
+    if (isRideRequestSubmitting) {
+      return
+    }
+
+    setSelectedRideLocation(null)
+    setRideRequestForm(INITIAL_RIDE_REQUEST_FORM)
+  }
+
+  function handleRideRequestInputChange(event) {
+    const { name, value } = event.target
+    setRideRequestForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }))
+  }
+
+  async function handleRideRequestSubmit(event) {
+    event.preventDefault()
+    setError('')
+    setSuccess('')
+
+    if (!selectedRideLocation) {
+      setError('Seleccione uma chapa activa antes de enviar o pedido.')
+      return
+    }
+
+    if (!('geolocation' in navigator)) {
+      setError('Geolocalizacao nao esta disponivel neste navegador.')
+      return
+    }
+
+    setIsRideRequestSubmitting(true)
+
+    try {
+      const position = await getCurrentPosition()
+
+      await createRideRequest({
+        driver_id: selectedRideLocation.driver_id,
+        trip_id: selectedRideLocation.trip_id,
+        passenger_latitude: position.coords.latitude,
+        passenger_longitude: position.coords.longitude,
+        destination: rideRequestForm.destination.trim(),
+        people_count: Number(rideRequestForm.people_count),
+        note: rideRequestForm.note.trim() || undefined,
+      })
+
+      setSelectedRideLocation(null)
+      setRideRequestForm(INITIAL_RIDE_REQUEST_FORM)
+      setSuccess('Pedido enviado ao motorista.')
+    } catch (apiError) {
+      setError(apiError.response?.data?.message || apiError.message || 'Nao foi possivel enviar o pedido.')
+    } finally {
+      setIsRideRequestSubmitting(false)
+    }
+  }
+
   return (
     <main className="passenger-page">
       <header className="passenger-header">
@@ -217,6 +318,7 @@ function PassengerDashboard() {
       </header>
 
       {error ? <div className="passenger-error">{error}</div> : null}
+      {success ? <div className="passenger-success">{success}</div> : null}
 
       <section className="passenger-toolbar">
         <label className="passenger-field">
@@ -296,6 +398,9 @@ function PassengerDashboard() {
                     <span className={`passenger-lotacao passenger-lotacao-${location.lotacao}`}>
                       Lotacao: {location.lotacaoLabel}
                     </span>
+                    <button className="button passenger-request-button" type="button" onClick={() => openRideRequestForm(location)}>
+                      Requisitar Chapa
+                    </button>
                   </div>
                 </Popup>
               </Marker>
@@ -330,11 +435,114 @@ function PassengerDashboard() {
                   {location.origem ?? 'Origem nao definida'} para {location.destino ?? 'Destino nao definido'}
                 </p>
                 <small>Ultima actualizacao: {formatLastUpdate(location.recorded_at)}</small>
+                <button className="button passenger-request-button" type="button" onClick={() => openRideRequestForm(location)}>
+                  Requisitar Chapa
+                </button>
               </article>
             ))}
           </div>
         </aside>
       </section>
+
+      {selectedRideLocation ? (
+        <div className="passenger-modal-backdrop" role="presentation">
+          <form
+            aria-labelledby="passenger-ride-request-title"
+            className="passenger-request-modal"
+            onSubmit={handleRideRequestSubmit}
+            role="dialog"
+          >
+            <div className="passenger-panel-header">
+              <div>
+                <span className="eyebrow">Pedido de chapa</span>
+                <strong id="passenger-ride-request-title">Requisitar Chapa</strong>
+              </div>
+              <button
+                aria-label="Fechar formulario"
+                className="driver-modal-close"
+                disabled={isRideRequestSubmitting}
+                onClick={closeRideRequestForm}
+                type="button"
+              >
+                x
+              </button>
+            </div>
+
+            <div className="passenger-request-modal-body">
+              <div className="passenger-request-trip">
+                <span>{selectedRideLocation.routeName}</span>
+                <strong>{selectedRideLocation.plate_number ?? 'Matricula nao informada'}</strong>
+              </div>
+
+              <div className="passenger-request-map-wrap">
+                <MapContainer
+                  center={[selectedRideLocation.latitude, selectedRideLocation.longitude]}
+                  className="passenger-request-map"
+                  scrollWheelZoom={false}
+                  zoom={15}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <RequestModalMapResize />
+                  <Marker
+                    icon={LOTACAO_ICONS[selectedRideLocation.lotacao]}
+                    position={[selectedRideLocation.latitude, selectedRideLocation.longitude]}
+                  />
+                </MapContainer>
+              </div>
+
+              <label className="passenger-field">
+                <span>Destino</span>
+                <input
+                  autoComplete="off"
+                  name="destination"
+                  onChange={handleRideRequestInputChange}
+                  required
+                  value={rideRequestForm.destination}
+                />
+              </label>
+
+              <label className="passenger-field">
+                <span>Numero de pessoas</span>
+                <input
+                  min="1"
+                  name="people_count"
+                  onChange={handleRideRequestInputChange}
+                  required
+                  type="number"
+                  value={rideRequestForm.people_count}
+                />
+              </label>
+
+              <label className="passenger-field">
+                <span>Observacao opcional</span>
+                <textarea
+                  name="note"
+                  onChange={handleRideRequestInputChange}
+                  rows="3"
+                  value={rideRequestForm.note}
+                />
+              </label>
+            </div>
+
+            <div className="driver-actions passenger-request-actions">
+              <button className="button" disabled={isRideRequestSubmitting} type="submit">
+                {isRideRequestSubmitting ? 'A enviar...' : 'Enviar pedido'}
+              </button>
+              <button
+                className="button button-secondary"
+                disabled={isRideRequestSubmitting}
+                onClick={closeRideRequestForm}
+                type="button"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </main>
   )
 }

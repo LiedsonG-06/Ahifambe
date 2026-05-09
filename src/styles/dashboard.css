@@ -622,17 +622,23 @@
   font-weight: 800;
 }
 
-.passenger-field select {
+.passenger-field input,
+.passenger-field select,
+.passenger-field textarea {
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
   color: #111827;
+  font: inherit;
   min-height: 48px;
   padding: 0.75rem 0.85rem;
+  resize: vertical;
   width: 100%;
 }
 
-.passenger-field select:focus {
+.passenger-field input:focus,
+.passenger-field select:focus,
+.passenger-field textarea:focus {
   border-color: #0ea5e9;
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.16);
   outline: 0;
@@ -760,6 +766,12 @@
   color: #64748b;
 }
 
+.passenger-request-button {
+  margin-top: 0.45rem;
+  min-height: 38px;
+  padding: 0.48rem 0.72rem;
+}
+
 .passenger-marker {
   background: transparent;
   border: 0;
@@ -817,6 +829,157 @@
   margin: 0.2rem 0 0;
 }
 
+.passenger-modal-backdrop {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.68);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 1000;
+}
+
+.passenger-request-modal {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
+  display: grid;
+  gap: 1rem;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-height: 90vh;
+  max-width: 480px;
+  overflow: hidden;
+  padding: 1.25rem;
+  position: relative;
+  width: min(100%, 480px);
+  z-index: 1001;
+}
+
+.passenger-request-modal-body {
+  display: grid;
+  gap: 1rem;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.passenger-request-trip {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.9rem;
+}
+
+.passenger-request-trip span {
+  color: #64748b;
+  font-weight: 800;
+}
+
+.passenger-request-trip strong {
+  color: #0f172a;
+}
+
+.passenger-request-map-wrap {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  height: 300px;
+  max-height: 320px;
+  min-height: 260px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  z-index: 0;
+}
+
+.passenger-request-map,
+.passenger-request-map .leaflet-container {
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+.passenger-request-map {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.passenger-request-map .leaflet-pane,
+.passenger-request-map .leaflet-control-container {
+  z-index: 1;
+}
+
+.passenger-request-actions {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
+}
+
+.driver-requests-panel {
+  margin-top: 0;
+}
+
+.driver-request-list {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.driver-request-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+
+.driver-request-card-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.driver-request-card-header div,
+.driver-request-details {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.driver-request-card span,
+.driver-request-card small,
+.driver-request-details span {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.driver-request-card strong {
+  color: #0f172a;
+}
+
+.driver-request-status {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0.28rem 0.62rem;
+  white-space: nowrap;
+}
+
+.driver-request-status-pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.driver-request-status-accepted {
+  background: #dcfce7;
+  color: #15803d;
+}
+
 /* Cards */
 .admin-stat-card,
 .admin-table-wrap,
@@ -829,7 +992,8 @@
 .driver-error,
 .driver-success,
 .passenger-state,
-.passenger-error {
+.passenger-error,
+.passenger-success {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
@@ -901,7 +1065,8 @@
 }
 
 .admin-success,
-.driver-success {
+.driver-success,
+.passenger-success {
   background: #f0fdf4;
   border-color: #bbf7d0;
   color: #15803d;
@@ -1063,6 +1228,22 @@
     min-height: 420px;
   }
 
+  .passenger-modal-backdrop {
+    align-items: stretch;
+    padding: 0.75rem;
+  }
+
+  .passenger-request-modal {
+    align-self: center;
+    max-height: 90vh;
+    padding: 1rem;
+    width: 100%;
+  }
+
+  .passenger-request-map-wrap {
+    height: 260px;
+  }
+
   .admin-user {
     align-items: flex-start;
     min-width: 0;
@@ -1089,6 +1270,10 @@
 
   .driver-lotacao-actions {
     grid-template-columns: 1fr;
+  }
+
+  .driver-request-card-header {
+    display: grid;
   }
 
   .admin-content,

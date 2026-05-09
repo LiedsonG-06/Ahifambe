@@ -1,0 +1,3 @@
+ALTER TABLE ride_requests
+  ADD COLUMN people_count INT NOT NULL DEFAULT 1,
+  ADD COLUMN note TEXT NULL;

@@ -10,6 +10,7 @@ const tripRoutes = require('./routes/tripRoutes');
 const locationRoutes = require('./routes/locationRoutes');
 const feedbackRoutes = require('./routes/feedbackRoutes');
 const userRoutes = require('./routes/userRoutes');
+const rideRequestRoutes = require('./routes/rideRequestRoutes');
 const errorMiddleware = require('./middlewares/errorMiddleware');
 const notFoundMiddleware = require('./middlewares/notFoundMiddleware');
 
@@ -28,6 +29,7 @@ app.use('/api/trips', tripRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/ride-requests', rideRequestRoutes);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
