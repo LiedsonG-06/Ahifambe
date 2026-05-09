@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import L from 'leaflet'
+import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import { useAuth } from '../../context/AuthContext'
 import { updateLocation } from '../../services/locationService'
 import { acceptRideRequest, getDriverRideRequests, rejectRideRequest } from '../../services/rideRequestService'
@@ -27,6 +29,13 @@ const LOTACAO_OPTIONS = [
   { value: 'intermedio', label: 'Intermedio' },
   { value: 'lotado', label: 'Lotado' },
 ]
+const PASSENGER_MARKER_ICON = L.divIcon({
+  className: 'driver-passenger-marker',
+  html: '<span></span>',
+  iconAnchor: [12, 24],
+  iconSize: [24, 24],
+  popupAnchor: [0, -24],
+})
 
 function getApiErrorMessage(error) {
   return error?.response?.data?.message || error.message || 'Nao foi possivel concluir a operacao.'
@@ -85,9 +94,58 @@ function getRideRequestStatusLabel(status) {
     pending: 'Pendente',
     accepted: 'Aceite',
     rejected: 'Recusado',
+    completed: 'Concluído',
   }
 
   return labels[status] || status || 'Desconhecido'
+}
+
+function getRideRequestDate(request) {
+  const value = request.created_at || request.createdAt || request.requested_at || request.updated_at
+
+  if (!value) {
+    return 'Data nao informada'
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Data nao informada'
+  }
+
+  return date.toLocaleString('pt-MZ', {
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
+function getRideRequestPosition(request) {
+  const latitude = Number(request.passenger_latitude)
+  const longitude = Number(request.passenger_longitude)
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null
+  }
+
+  return [latitude, longitude]
+}
+
+function RideRequestMapResize({ position }) {
+  const map = useMap()
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      map.invalidateSize()
+      map.setView(position, 15, { animate: true })
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [map, position])
+
+  return null
 }
 
 function DriverDashboard() {
@@ -117,6 +175,7 @@ function DriverDashboard() {
   const [rideRequests, setRideRequests] = useState([])
   const [isRideRequestsLoading, setIsRideRequestsLoading] = useState(true)
   const [updatingRideRequestId, setUpdatingRideRequestId] = useState('')
+  const [visibleRideRequestMapId, setVisibleRideRequestMapId] = useState('')
 
   const driverVehicles = useMemo(() => vehicles, [vehicles])
   const selectedVehicle = useMemo(
@@ -485,6 +544,12 @@ function DriverDashboard() {
     }
   }
 
+  function toggleRideRequestMap(requestId) {
+    setVisibleRideRequestMapId((currentRequestId) =>
+      currentRequestId === String(requestId) ? '' : String(requestId),
+    )
+  }
+
   return (
     <main className="driver-page">
       <header className="driver-header">
@@ -716,51 +781,102 @@ function DriverDashboard() {
 
         {rideRequests.length ? (
           <div className="driver-request-list">
-            {rideRequests.map((request) => (
-              <article className="driver-request-card" key={request.id}>
-                <div className="driver-request-card-header">
-                  <div>
-                    <span>Passageiro</span>
-                    <strong>{request.passenger_name || 'Passageiro'}</strong>
-                    <small>{request.passenger_email || 'Email nao informado'}</small>
-                  </div>
-                  <small className={`driver-request-status driver-request-status-${request.status}`}>
-                    {getRideRequestStatusLabel(request.status)}
-                  </small>
-                </div>
+            {rideRequests.map((request) => {
+              const requestPosition = getRideRequestPosition(request)
+              const isMapVisible = visibleRideRequestMapId === String(request.id)
 
-                <div className="driver-request-details">
-                  <span>Destino: {request.destination}</span>
-                  <span>Pessoas: {request.people_count}</span>
-                  <span>Observacao: {request.note || 'Sem observacao'}</span>
-                  <span>
-                    Coordenadas: {request.passenger_latitude}, {request.passenger_longitude}
-                  </span>
-                  <span>Viagem: #{request.trip_id}</span>
-                </div>
-
-                {request.status === 'pending' ? (
-                  <div className="driver-actions">
-                    <button
-                      className="button button-success"
-                      disabled={updatingRideRequestId === String(request.id)}
-                      onClick={() => handleRideRequestAction(request.id, 'accept')}
-                      type="button"
-                    >
-                      Aceitar
-                    </button>
-                    <button
-                      className="button button-danger"
-                      disabled={updatingRideRequestId === String(request.id)}
-                      onClick={() => handleRideRequestAction(request.id, 'reject')}
-                      type="button"
-                    >
-                      Recusar
-                    </button>
+              return (
+                <article className="driver-request-card" key={request.id}>
+                  <div className="driver-request-card-header">
+                    <div className="driver-request-passenger">
+                      <span>Passageiro</span>
+                      <strong>{request.passenger_name || 'Passageiro'}</strong>
+                      <small>{request.passenger_email || 'Email nao informado'}</small>
+                    </div>
+                    <small className={`driver-request-status driver-request-status-${request.status}`}>
+                      {getRideRequestStatusLabel(request.status)}
+                    </small>
                   </div>
-                ) : null}
-              </article>
-            ))}
+
+                  <div className="driver-request-details">
+                    <div>
+                      <span>Destino</span>
+                      <strong>{request.destination || 'Destino nao informado'}</strong>
+                    </div>
+                    <div>
+                      <span>Pessoas</span>
+                      <strong>{request.people_count || 1}</strong>
+                    </div>
+                    <div>
+                      <span>Viagem</span>
+                      <strong>#{request.trip_id || 'N/A'}</strong>
+                    </div>
+                    <div>
+                      <span>Pedido em</span>
+                      <strong>{getRideRequestDate(request)}</strong>
+                    </div>
+                    <div className="driver-request-note">
+                      <span>Observacao</span>
+                      <p>{request.note || 'Sem observacao'}</p>
+                    </div>
+                  </div>
+
+                  <div className="driver-request-actions">
+                    {request.status === 'pending' ? (
+                      <>
+                        <button
+                          className="button button-success"
+                          disabled={updatingRideRequestId === String(request.id)}
+                          onClick={() => handleRideRequestAction(request.id, 'accept')}
+                          type="button"
+                        >
+                          Aceitar
+                        </button>
+                        <button
+                          className="button button-danger"
+                          disabled={updatingRideRequestId === String(request.id)}
+                          onClick={() => handleRideRequestAction(request.id, 'reject')}
+                          type="button"
+                        >
+                          Recusar
+                        </button>
+                      </>
+                    ) : null}
+
+                    {requestPosition ? (
+                      <button
+                        className="button button-secondary"
+                        onClick={() => toggleRideRequestMap(request.id)}
+                        type="button"
+                      >
+                        {isMapVisible ? 'Ocultar localização' : 'Ver localização do passageiro'}
+                      </button>
+                    ) : (
+                      <span className="driver-request-location-unavailable">Localização indisponível</span>
+                    )}
+                  </div>
+
+                  {isMapVisible && requestPosition ? (
+                    <div className="driver-request-map-wrap">
+                      <MapContainer center={requestPosition} className="driver-request-map" scrollWheelZoom zoom={15}>
+                        <RideRequestMapResize position={requestPosition} />
+                        <TileLayer
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <Marker icon={PASSENGER_MARKER_ICON} position={requestPosition}>
+                          <Popup>
+                            <strong>{request.passenger_name || 'Passageiro'}</strong>
+                            <br />
+                            {request.destination || 'Destino nao informado'}
+                          </Popup>
+                        </Marker>
+                      </MapContainer>
+                    </div>
+                  ) : null}
+                </article>
+              )
+            })}
           </div>
         ) : null}
       </section>
