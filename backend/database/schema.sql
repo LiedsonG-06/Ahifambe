@@ -111,3 +111,6 @@ CREATE TABLE IF NOT EXISTS ride_requests (
   CONSTRAINT fk_ride_requests_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE,
   CONSTRAINT chk_ride_requests_people_count CHECK (people_count > 0)
 );
+ALTER TABLE drivers
+MODIFY status ENUM('pending','active','inactive')
+DEFAULT 'active';
