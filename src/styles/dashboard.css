@@ -184,7 +184,7 @@
 .admin-stats {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 }
 
 .admin-action-row {
@@ -1146,7 +1146,15 @@
 }
 
 .admin-stat-card:nth-child(3) {
+  border-top-color: #f59e0b;
+}
+
+.admin-stat-card:nth-child(4) {
   border-top-color: #64748b;
+}
+
+.admin-stat-card:nth-child(5) {
+  border-top-color: #0f172a;
 }
 
 .admin-stat-card:hover {
@@ -1324,9 +1332,6 @@
     width: 100%;
   }
 
-  .admin-stats {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 760px) {

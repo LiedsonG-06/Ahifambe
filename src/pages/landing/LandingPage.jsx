@@ -10,7 +10,7 @@ function LandingPage() {
         </Link>
         <div className="nav-actions">
           <Link className="text-link" to="/login">
-            Login
+            Entrar
           </Link>
           <Link className="button button-small" to="/register">
             Criar conta
