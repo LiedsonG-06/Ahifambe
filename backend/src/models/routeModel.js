@@ -35,9 +35,26 @@ const findByDriverId = async (driverId) => {
   return rows;
 };
 
+const update = async (id, { nome, origem, destino }) => {
+  const [result] = await pool.execute(
+    'UPDATE routes SET nome = ?, origem = ?, destino = ? WHERE id = ?',
+    [nome, origem, destino, id]
+  );
+
+  return result.affectedRows;
+};
+
+const remove = async (id) => {
+  const [result] = await pool.execute('DELETE FROM routes WHERE id = ?', [id]);
+
+  return result.affectedRows;
+};
+
 module.exports = {
   create,
   findById,
   findAll,
   findByDriverId,
+  update,
+  remove,
 };

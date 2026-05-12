@@ -203,6 +203,11 @@
   font-weight: 700;
 }
 
+.admin-feedback-section {
+  display: grid;
+  gap: 1rem;
+}
+
 /* Driver Page */
 .driver-page {
   background: #f8fafc;
@@ -317,6 +322,7 @@
 
 .driver-field input,
 .driver-field select,
+.driver-field textarea,
 .driver-vehicle-status-control select {
   background: #ffffff;
   border: 1px solid #cbd5e1;
@@ -324,11 +330,13 @@
   color: #111827;
   min-height: 48px;
   padding: 0.75rem 0.85rem;
+  resize: vertical;
   width: 100%;
 }
 
 .driver-field input:focus,
 .driver-field select:focus,
+.driver-field textarea:focus,
 .driver-vehicle-status-control select:focus {
   border-color: #0ea5e9;
   box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.16);
@@ -1233,10 +1241,108 @@
   border-color: #15803d;
 }
 
+.button-neutral {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.button-neutral:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
 .admin-table-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+.admin-modal-backdrop {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.68);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 30;
+}
+
+.admin-route-modal {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
+  display: grid;
+  gap: 1rem;
+  max-width: 480px;
+  padding: 1.25rem;
+  width: min(100%, 480px);
+}
+
+.admin-modal-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.admin-modal-header div,
+.admin-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.admin-modal-header span,
+.admin-field span {
+  color: #64748b;
+  font-weight: 800;
+}
+
+.admin-modal-header strong {
+  color: #0f172a;
+  font-size: 1.2rem;
+}
+
+.admin-field input {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  color: #111827;
+  font: inherit;
+  min-height: 48px;
+  padding: 0.75rem 0.85rem;
+  width: 100%;
+}
+
+.admin-field input:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.16);
+  outline: 0;
+}
+
+.admin-modal-close {
+  align-items: center;
+  background: #0f172a;
+  border: 0;
+  border-radius: 50%;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 1rem;
+  font-weight: 900;
+  height: 34px;
+  justify-content: center;
+  line-height: 1;
+  width: 34px;
+}
+
+.admin-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: flex-end;
 }
 
 /* Tabelas */
@@ -1299,6 +1405,21 @@
 .admin-status-blocked {
   background: #fee2e2;
   color: #b91c1c;
+}
+
+.admin-feedback-status-pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.admin-feedback-status-reviewed {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.admin-feedback-status-resolved {
+  background: #dcfce7;
+  color: #15803d;
 }
 
 /* Responsividade */
@@ -1388,6 +1509,11 @@
   .admin-action-row {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .admin-modal-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
   }
 }
 

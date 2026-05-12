@@ -79,7 +79,66 @@ const listRoutes = async (user) => {
   return routeModel.findAll();
 };
 
+const updateRoute = async (routeId, routeInput) => {
+  const id = Number(routeId);
+  const nome = normalizeString(routeInput.nome);
+  const origem = normalizeString(routeInput.origem);
+  const destino = normalizeString(routeInput.destino);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new AppError('Route id is invalid.', 400);
+  }
+
+  if (!nome || !origem || !destino) {
+    throw new AppError('nome, origem and destino are required.', 400);
+  }
+
+  const route = await routeModel.findById(id);
+
+  if (!route) {
+    throw new AppError('Route not found.', 404);
+  }
+
+  await routeModel.update(id, { nome, origem, destino });
+  const updatedRoute = await routeModel.findById(id);
+
+  return {
+    message: 'Route updated successfully.',
+    route: updatedRoute,
+  };
+};
+
+const deleteRoute = async (routeId) => {
+  const id = Number(routeId);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new AppError('Route id is invalid.', 400);
+  }
+
+  const route = await routeModel.findById(id);
+
+  if (!route) {
+    throw new AppError('Route not found.', 404);
+  }
+
+  try {
+    await routeModel.remove(id);
+  } catch (error) {
+    if (error?.code === 'ER_ROW_IS_REFERENCED_2') {
+      throw new AppError('Route cannot be deleted because it is linked to trips.', 409);
+    }
+
+    throw error;
+  }
+
+  return {
+    message: 'Route deleted successfully.',
+  };
+};
+
 module.exports = {
   createRoute,
   listRoutes,
+  updateRoute,
+  deleteRoute,
 };

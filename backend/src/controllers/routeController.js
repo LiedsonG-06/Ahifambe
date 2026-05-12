@@ -23,7 +23,19 @@ const listRoutes = async (req, res) => {
   res.status(200).json(routes);
 };
 
+const updateRoute = async (req, res) => {
+  const result = await routeService.updateRoute(req.params.id, req.body);
+  res.status(200).json(result);
+};
+
+const deleteRoute = async (req, res) => {
+  const result = await routeService.deleteRoute(req.params.id);
+  res.status(200).json(result);
+};
+
 module.exports = {
   createRoute,
   listRoutes,
+  updateRoute,
+  deleteRoute,
 };

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import { useAuth } from '../../context/AuthContext'
+import { createFeedback } from '../../services/feedbackService'
 import { updateLocation } from '../../services/locationService'
 import { acceptRideRequest, getDriverRideRequests, rejectRideRequest } from '../../services/rideRequestService'
 import { createRoute, getRoutes } from '../../services/routeService'
@@ -19,6 +20,10 @@ const INITIAL_ROUTE_FORM = {
   origem: '',
   destino: '',
 }
+const INITIAL_FEEDBACK_FORM = {
+  type: 'reclamacao',
+  message: '',
+}
 const VEHICLE_STATUS_OPTIONS = [
   { value: 'active', label: 'Activa' },
   { value: 'inactive', label: 'Inactiva' },
@@ -28,6 +33,11 @@ const LOTACAO_OPTIONS = [
   { value: 'vazio', label: 'Vazio' },
   { value: 'intermedio', label: 'Intermedio' },
   { value: 'lotado', label: 'Lotado' },
+]
+const FEEDBACK_TYPE_OPTIONS = [
+  { value: 'reclamacao', label: 'Reclamacao' },
+  { value: 'sugestao', label: 'Sugestao' },
+  { value: 'problema_operacional', label: 'Problema operacional' },
 ]
 const PASSENGER_MARKER_ICON = L.divIcon({
   className: 'driver-passenger-marker',
@@ -168,6 +178,7 @@ function DriverDashboard() {
   const [statusUpdatingVehicleId, setStatusUpdatingVehicleId] = useState('')
   const [vehicleForm, setVehicleForm] = useState(INITIAL_VEHICLE_FORM)
   const [routeForm, setRouteForm] = useState(INITIAL_ROUTE_FORM)
+  const [feedbackForm, setFeedbackForm] = useState(INITIAL_FEEDBACK_FORM)
   const [isLocationActive, setIsLocationActive] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -176,6 +187,8 @@ function DriverDashboard() {
   const [isRideRequestsLoading, setIsRideRequestsLoading] = useState(true)
   const [updatingRideRequestId, setUpdatingRideRequestId] = useState('')
   const [visibleRideRequestMapId, setVisibleRideRequestMapId] = useState('')
+  const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState(false)
+  const [isFeedbackSubmitting, setIsFeedbackSubmitting] = useState(false)
 
   const driverVehicles = useMemo(() => vehicles, [vehicles])
   const selectedVehicle = useMemo(
@@ -301,6 +314,14 @@ function DriverDashboard() {
     }))
   }
 
+  function handleFeedbackInputChange(event) {
+    const { name, value } = event.target
+    setFeedbackForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }))
+  }
+
   function closeVehicleForm() {
     setIsVehicleFormOpen(false)
     setVehicleForm(INITIAL_VEHICLE_FORM)
@@ -309,6 +330,45 @@ function DriverDashboard() {
   function closeRouteForm() {
     setIsRouteFormOpen(false)
     setRouteForm(INITIAL_ROUTE_FORM)
+  }
+
+  function closeFeedbackForm() {
+    if (isFeedbackSubmitting) {
+      return
+    }
+
+    setIsFeedbackFormOpen(false)
+    setFeedbackForm(INITIAL_FEEDBACK_FORM)
+  }
+
+  async function handleFeedbackSubmit(event) {
+    event.preventDefault()
+    clearMessages()
+
+    const message = feedbackForm.message.trim()
+
+    if (!message) {
+      setError('Escreva a mensagem antes de enviar o feedback.')
+      return
+    }
+
+    setIsFeedbackSubmitting(true)
+
+    try {
+      await createFeedback({
+        type: feedbackForm.type,
+        message,
+        trip_id: activeTripId || undefined,
+      })
+
+      setIsFeedbackFormOpen(false)
+      setFeedbackForm(INITIAL_FEEDBACK_FORM)
+      setSuccess('Feedback enviado ao administrador.')
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError))
+    } finally {
+      setIsFeedbackSubmitting(false)
+    }
   }
 
   async function handleCreateRoute(event) {
@@ -562,6 +622,16 @@ function DriverDashboard() {
           <span className={`driver-status driver-status-${statusLabel.toLowerCase().replace(' ', '-')}`}>
             {statusLabel}
           </span>
+          <button
+            className="button"
+            onClick={() => {
+              clearMessages()
+              setIsFeedbackFormOpen(true)
+            }}
+            type="button"
+          >
+            Enviar feedback
+          </button>
           <button className="button button-secondary" type="button" onClick={logout}>
             Logout
           </button>
@@ -1031,6 +1101,71 @@ function DriverDashboard() {
                 className="button button-secondary"
                 disabled={isRouteSaving}
                 onClick={closeRouteForm}
+                type="button"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+
+      {isFeedbackFormOpen ? (
+        <div className="driver-modal-backdrop" role="presentation">
+          <form
+            aria-labelledby="driver-feedback-modal-title"
+            className="driver-vehicle-modal"
+            onSubmit={handleFeedbackSubmit}
+            role="dialog"
+          >
+            <div className="driver-panel-header">
+              <div>
+                <span>Feedback</span>
+                <strong id="driver-feedback-modal-title">Enviar feedback</strong>
+              </div>
+              <button
+                aria-label="Fechar formulario"
+                className="driver-modal-close"
+                disabled={isFeedbackSubmitting}
+                onClick={closeFeedbackForm}
+                type="button"
+              >
+                x
+              </button>
+            </div>
+
+            {error ? <div className="driver-error">{error}</div> : null}
+
+            <label className="driver-field">
+              <span>Tipo</span>
+              <select name="type" onChange={handleFeedbackInputChange} value={feedbackForm.type}>
+                {FEEDBACK_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="driver-field">
+              <span>Mensagem</span>
+              <textarea
+                name="message"
+                onChange={handleFeedbackInputChange}
+                required
+                rows="5"
+                value={feedbackForm.message}
+              />
+            </label>
+
+            <div className="driver-actions">
+              <button className="button driver-add-vehicle-button" disabled={isFeedbackSubmitting} type="submit">
+                {isFeedbackSubmitting ? 'A enviar...' : 'Enviar'}
+              </button>
+              <button
+                className="button button-secondary"
+                disabled={isFeedbackSubmitting}
+                onClick={closeFeedbackForm}
                 type="button"
               >
                 Cancelar

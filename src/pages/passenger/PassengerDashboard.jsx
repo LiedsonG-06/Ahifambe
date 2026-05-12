@@ -5,6 +5,7 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 import { useAuth } from '../../context/AuthContext'
+import { createFeedback } from '../../services/feedbackService'
 import { getActiveLocations } from '../../services/locationService'
 import { createRideRequest } from '../../services/rideRequestService'
 import { getRoutes } from '../../services/routeService'
@@ -15,6 +16,15 @@ const INITIAL_RIDE_REQUEST_FORM = {
   people_count: '1',
   note: '',
 }
+const INITIAL_FEEDBACK_FORM = {
+  type: 'reclamacao',
+  message: '',
+}
+const FEEDBACK_TYPE_OPTIONS = [
+  { value: 'reclamacao', label: 'Reclamacao' },
+  { value: 'sugestao', label: 'Sugestao' },
+  { value: 'elogio', label: 'Elogio' },
+]
 const LOTACAO_OPTIONS = {
   vazio: { label: 'Vazio', markerClass: 'passenger-marker-vazio' },
   intermedio: { label: 'Intermedio', markerClass: 'passenger-marker-intermedio' },
@@ -137,6 +147,9 @@ function PassengerDashboard() {
   const [selectedRideLocation, setSelectedRideLocation] = useState(null)
   const [rideRequestForm, setRideRequestForm] = useState(INITIAL_RIDE_REQUEST_FORM)
   const [isRideRequestSubmitting, setIsRideRequestSubmitting] = useState(false)
+  const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState(false)
+  const [feedbackForm, setFeedbackForm] = useState(INITIAL_FEEDBACK_FORM)
+  const [isFeedbackSubmitting, setIsFeedbackSubmitting] = useState(false)
 
   const loadRoutes = useCallback(async () => {
     setLoadingRoutes(true)
@@ -258,6 +271,53 @@ function PassengerDashboard() {
     }))
   }
 
+  function closeFeedbackForm() {
+    if (isFeedbackSubmitting) {
+      return
+    }
+
+    setIsFeedbackFormOpen(false)
+    setFeedbackForm(INITIAL_FEEDBACK_FORM)
+  }
+
+  function handleFeedbackInputChange(event) {
+    const { name, value } = event.target
+    setFeedbackForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }))
+  }
+
+  async function handleFeedbackSubmit(event) {
+    event.preventDefault()
+    setError('')
+    setSuccess('')
+
+    const message = feedbackForm.message.trim()
+
+    if (!message) {
+      setError('Escreva a mensagem antes de enviar o feedback.')
+      return
+    }
+
+    setIsFeedbackSubmitting(true)
+
+    try {
+      await createFeedback({
+        type: feedbackForm.type,
+        message,
+      })
+
+      setIsFeedbackFormOpen(false)
+      setFeedbackForm(INITIAL_FEEDBACK_FORM)
+      setSuccess('Feedback enviado ao administrador.')
+    } catch (apiError) {
+      setError(apiError.response?.data?.message || 'Nao foi possivel enviar o feedback.')
+    } finally {
+      setIsFeedbackSubmitting(false)
+    }
+  }
+
   async function handleRideRequestSubmit(event) {
     event.preventDefault()
     setError('')
@@ -311,6 +371,17 @@ function PassengerDashboard() {
           <span className="passenger-live-status">
             {loadingLocations ? 'A actualizar...' : `${filteredLocations.length} chapas activas`}
           </span>
+          <button
+            className="button"
+            type="button"
+            onClick={() => {
+              setError('')
+              setSuccess('')
+              setIsFeedbackFormOpen(true)
+            }}
+          >
+            Enviar feedback
+          </button>
           <button className="button button-secondary" type="button" onClick={logout}>
             Logout
           </button>
@@ -535,6 +606,71 @@ function PassengerDashboard() {
                 className="button button-secondary"
                 disabled={isRideRequestSubmitting}
                 onClick={closeRideRequestForm}
+                type="button"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+
+      {isFeedbackFormOpen ? (
+        <div className="passenger-modal-backdrop" role="presentation">
+          <form
+            aria-labelledby="passenger-feedback-title"
+            className="passenger-request-modal"
+            onSubmit={handleFeedbackSubmit}
+            role="dialog"
+          >
+            <div className="passenger-panel-header">
+              <div>
+                <span className="eyebrow">Feedback</span>
+                <strong id="passenger-feedback-title">Enviar feedback</strong>
+              </div>
+              <button
+                aria-label="Fechar formulario"
+                className="driver-modal-close"
+                disabled={isFeedbackSubmitting}
+                onClick={closeFeedbackForm}
+                type="button"
+              >
+                x
+              </button>
+            </div>
+
+            <div className="passenger-request-modal-body">
+              <label className="passenger-field">
+                <span>Tipo</span>
+                <select name="type" onChange={handleFeedbackInputChange} value={feedbackForm.type}>
+                  {FEEDBACK_TYPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="passenger-field">
+                <span>Mensagem</span>
+                <textarea
+                  name="message"
+                  onChange={handleFeedbackInputChange}
+                  required
+                  rows="5"
+                  value={feedbackForm.message}
+                />
+              </label>
+            </div>
+
+            <div className="driver-actions passenger-request-actions">
+              <button className="button" disabled={isFeedbackSubmitting} type="submit">
+                {isFeedbackSubmitting ? 'A enviar...' : 'Enviar'}
+              </button>
+              <button
+                className="button button-secondary"
+                disabled={isFeedbackSubmitting}
+                onClick={closeFeedbackForm}
                 type="button"
               >
                 Cancelar

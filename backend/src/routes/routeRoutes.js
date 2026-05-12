@@ -10,5 +10,7 @@ router.use(authenticate);
 
 router.post('/', authorize('admin', 'driver'), asyncHandler(routeController.createRoute));
 router.get('/', authorize('admin', 'passenger', 'driver'), asyncHandler(routeController.listRoutes));
+router.put('/:id', authorize('admin'), asyncHandler(routeController.updateRoute));
+router.delete('/:id', authorize('admin'), asyncHandler(routeController.deleteRoute));
 
 module.exports = router;

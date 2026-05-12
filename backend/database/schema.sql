@@ -113,4 +113,3 @@ CREATE TABLE IF NOT EXISTS ride_requests (
 );
 ALTER TABLE drivers
 MODIFY status ENUM('pending','active','inactive')
-nno
