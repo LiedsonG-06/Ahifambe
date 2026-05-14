@@ -243,11 +243,92 @@
   margin: 0;
 }
 
+.driver-user-details {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.driver-user-details span {
+  color: #475569;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .driver-header-actions {
   align-items: flex-end;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.driver-quick-actions,
+.driver-summary-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.driver-action-card,
+.driver-summary-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  color: inherit;
+  display: grid;
+  gap: 0.45rem;
+  padding: 1.2rem;
+  text-decoration: none;
+}
+
+.driver-action-card {
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.driver-action-card:hover {
+  border-color: rgba(14, 165, 233, 0.38);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.1);
+  transform: translateY(-2px);
+}
+
+.driver-action-card-primary {
+  border-top: 4px solid #0ea5e9;
+}
+
+.driver-action-card:not(.driver-action-card-primary) {
+  border-top: 4px solid #22c55e;
+}
+
+.driver-action-card span,
+.driver-summary-card span {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.driver-action-card strong {
+  color: #0f172a;
+  font-size: 1.25rem;
+}
+
+.driver-action-card small {
+  color: #64748b;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.driver-summary-card strong {
+  color: #0f172a;
+  font-size: 1.55rem;
+  line-height: 1.1;
 }
 
 .driver-status {
@@ -281,7 +362,28 @@
 .driver-grid {
   display: grid;
   gap: 1.25rem;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  grid-template-columns: 1fr;
+  margin: 0 auto;
+  max-width: 980px;
+  width: 100%;
+}
+
+.driver-flow-header {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.driver-hidden {
+  display: none;
+}
+
+.driver-requests-panel,
+.driver-end-step,
+.driver-feedback-panel {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 980px;
+  width: 100%;
 }
 
 .driver-panel {
@@ -303,6 +405,7 @@
 }
 
 .driver-panel-header span,
+.driver-step-title span,
 .driver-field span,
 .driver-trip-card span {
   color: #64748b;
@@ -310,9 +413,96 @@
 }
 
 .driver-panel-header strong,
+.driver-step-title strong,
 .driver-trip-card strong {
   color: #0f172a;
   text-transform: capitalize;
+}
+
+.driver-step-card {
+  border-top: 4px solid #0ea5e9;
+}
+
+.driver-step-card-complete {
+  border-top-color: #22c55e;
+}
+
+.driver-step-card-locked {
+  background: #fbfdff;
+  border-top-color: #cbd5e1;
+}
+
+.driver-step-header {
+  align-items: flex-start;
+}
+
+.driver-step-header > div,
+.driver-step-title {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.driver-step-header small,
+.driver-step-title small {
+  color: #64748b;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.driver-step-badge,
+.driver-lotacao-badge {
+  border: 1px solid #bae6fd;
+  border-radius: 999px;
+  color: #0369a1;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0.32rem 0.68rem;
+  white-space: nowrap;
+}
+
+.driver-step-card-locked .driver-step-badge {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #64748b;
+}
+
+.driver-card-title-row {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.driver-lotacao-badge-vazio {
+  background: #dcfce7;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.driver-lotacao-badge-intermedio {
+  background: #fef3c7;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.driver-lotacao-badge-lotado {
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.driver-feedback-panel {
+  max-width: 860px;
+}
+
+.driver-feedback-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.driver-end-step {
+  border-top-color: #dc2626;
 }
 
 .driver-field {
@@ -1128,7 +1318,9 @@
 .admin-empty,
 .driver-state,
 .driver-error,
+.driver-warning,
 .driver-success,
+.driver-empty-state,
 .passenger-state,
 .passenger-error,
 .passenger-success {
@@ -1188,7 +1380,9 @@
 .admin-empty,
 .driver-state,
 .driver-error,
+.driver-warning,
 .driver-success,
+.driver-empty-state,
 .passenger-state,
 .passenger-error {
   color: #64748b;
@@ -1208,6 +1402,18 @@
   background: #fffbeb;
   border-color: #fde68a;
   color: #b45309;
+}
+
+.driver-warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
+.driver-empty-state {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #64748b;
 }
 
 .admin-success,

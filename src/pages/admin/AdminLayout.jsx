@@ -8,7 +8,7 @@ function AdminLayout({ children, eyebrow, title, description }) {
     <main className="admin-page">
       <aside className="admin-sidebar" aria-label="Menu de administracao">
         <div>
-          <span className="admin-brand">Ahifambe</span>
+          <span className="admin-brand">Lili Transport</span>
           <p>Admin</p>
         </div>
 

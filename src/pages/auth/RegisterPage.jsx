@@ -41,7 +41,7 @@ function RegisterPage() {
     <main className="auth-page">
       <section className="auth-panel">
         <Link className="brand auth-brand" to="/">
-          Ahifambe
+          Lili Transport
         </Link>
         <h1>Criar conta</h1>
         <p>Regista-te como passageiro ou motorista.</p>

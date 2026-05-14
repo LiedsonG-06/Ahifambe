@@ -99,6 +99,15 @@ function getLotacaoLabel(value) {
   return LOTACAO_OPTIONS.find((option) => option.value === value)?.label || 'Vazio'
 }
 
+function getUserRoleLabel(role) {
+  const labels = {
+    driver: 'Motorista',
+    motorista: 'Motorista',
+  }
+
+  return labels[String(role || '').toLowerCase()] || role || 'Perfil nao informado'
+}
+
 function getRideRequestStatusLabel(status) {
   const labels = {
     pending: 'Pendente',
@@ -189,6 +198,7 @@ function DriverDashboard() {
   const [visibleRideRequestMapId, setVisibleRideRequestMapId] = useState('')
   const [isFeedbackFormOpen, setIsFeedbackFormOpen] = useState(false)
   const [isFeedbackSubmitting, setIsFeedbackSubmitting] = useState(false)
+  const [view, setView] = useState('menu')
 
   const driverVehicles = useMemo(() => vehicles, [vehicles])
   const selectedVehicle = useMemo(
@@ -200,6 +210,7 @@ function DriverDashboard() {
   const statusLabel = getStatusLabel(activeTrip, isLocationActive)
   const activeTripId = getTripId(activeTrip)
   const activeTripLotacao = activeTrip?.lotacao || 'vazio'
+  const selectedRoute = routes.find((route) => String(route.id) === String(selectedRouteId))
 
   useEffect(() => {
     activeTripRef.current = activeTrip
@@ -615,34 +626,78 @@ function DriverDashboard() {
       <header className="driver-header">
         <div>
           <span className="eyebrow">Painel do motorista</span>
-          <h1>Bem-vindo, {user.name}</h1>
-          <p>Escolha a rota e o veiculo antes de iniciar a viagem.</p>
+          <h1>Bem-vindo, Motorista</h1>
+          <div className="driver-user-details" aria-label="Dados do utilizador autenticado">
+            <span>Nome: {user?.name || 'Nome nao informado'}</span>
+           
+           
+          </div>
         </div>
         <div className="driver-header-actions">
           <span className={`driver-status driver-status-${statusLabel.toLowerCase().replace(' ', '-')}`}>
             {statusLabel}
           </span>
-          <button
-            className="button"
-            onClick={() => {
-              clearMessages()
-              setIsFeedbackFormOpen(true)
-            }}
-            type="button"
-          >
-            Enviar feedback
-          </button>
           <button className="button button-secondary" type="button" onClick={logout}>
-            Logout
+            Sair
           </button>
         </div>
       </header>
 
-      <section className="driver-grid">
-        <form className="driver-panel" onSubmit={handleStartTrip}>
-          <div className="driver-panel-header">
-            <span>Viagem</span>
-            <strong>{activeTrip?.status || completedTrip?.status || 'Disponivel'}</strong>
+      {view === 'menu' ? (
+        <section className="driver-quick-actions" aria-label="Accoes principais">
+          <button
+            className="driver-action-card driver-action-card-primary"
+            onClick={() => {
+              clearMessages()
+              setView('trip')
+            }}
+            type="button"
+          >
+            <strong>Gestao da Viagem</strong>
+            <small>Iniciar, acompanhar e terminar a viagem.</small>
+          </button>
+          <button
+            className="driver-action-card"
+            onClick={() => {
+              clearMessages()
+              setView('feedback')
+            }}
+            type="button"
+          >
+            <strong>Enviar Feedback</strong>
+            <small>Partilhar problemas operacionais ou sugestoes.</small>
+          </button>
+        </section>
+      ) : null}
+
+      {view === 'trip' ? (
+      <>
+      <section className="driver-grid" id="driver-trip-management">
+        <div className="driver-flow-header">
+          <button
+            className="button button-secondary"
+            onClick={() => {
+              clearMessages()
+              setView('menu')
+            }}
+            type="button"
+          >
+            Voltar
+          </button>
+        </div>
+        <form className={`driver-panel driver-step-card${activeTrip ? ' driver-step-card-complete' : ''}`} onSubmit={handleStartTrip}>
+          <div className="driver-panel-header driver-step-header">
+            <div>
+              <span>Modulo</span>
+              <strong>Gestao da Viagem</strong>
+            </div>
+            <span className="driver-step-badge">{activeTrip ? 'Em viagem' : 'Offline'}</span>
+          </div>
+
+          <div className="driver-step-title">
+            <span>Etapa 1</span>
+            <strong>1. Seleccionar rota e viatura</strong>
+            <small>{activeTrip ? 'Concluida para a viagem activa.' : 'Escolha rota e viatura activa para iniciar.'}</small>
           </div>
 
           {isLoading ? <div className="driver-state">A carregar rotas e veiculos...</div> : null}
@@ -685,14 +740,14 @@ function DriverDashboard() {
           </div>
 
           <label className="driver-field">
-            <span>Veiculo</span>
+              <span>Viatura</span>
             <select
               disabled={Boolean(activeTrip) || isLoading}
               onChange={(event) => setSelectedVehicleId(event.target.value)}
               required
               value={selectedVehicleId}
             >
-              <option value="">Seleccionar veiculo</option>
+              <option value="">Seleccionar viatura activa</option>
               {driverVehicles.map((vehicle) => (
                 <option disabled={!isVehicleActive(vehicle)} key={vehicle.id} value={vehicle.id}>
                   {formatVehicle(vehicle)}
@@ -704,6 +759,15 @@ function DriverDashboard() {
 
           {!isLoading && !driverVehicles.length ? (
             <div className="driver-state">Nenhum veiculo associado ao motorista autenticado.</div>
+          ) : null}
+
+          {selectedRoute || selectedVehicle ? (
+            <div className="driver-trip-card">
+              <span>Seleccao actual</span>
+              <strong>{selectedRoute?.nome || 'Rota por seleccionar'}</strong>
+              <small>{selectedRoute ? `${selectedRoute.origem} para ${selectedRoute.destino}` : null}</small>
+              <small>{selectedVehicle ? formatVehicle(selectedVehicle) : 'Viatura por seleccionar'}</small>
+            </div>
           ) : null}
 
           <div className="driver-vehicle-summary">
@@ -762,23 +826,19 @@ function DriverDashboard() {
               disabled={Boolean(activeTrip) || isSubmitting || !canStartTrip}
               type="submit"
             >
-              Iniciar viagem
-            </button>
-            <button
-              className="button button-secondary"
-              disabled={!activeTrip || isSubmitting}
-              onClick={handleEndTrip}
-              type="button"
-            >
-              Terminar viagem
+              Iniciar Viagem
             </button>
           </div>
         </form>
 
-        <section className="driver-panel">
-          <div className="driver-panel-header">
-            <span>Localizacao</span>
-            <strong>{isLocationActive ? 'Activa' : 'Inactiva'}</strong>
+        {activeTrip ? (
+        <section className={`driver-panel driver-step-card${isLocationActive ? ' driver-step-card-complete' : ''}`}>
+          <div className="driver-panel-header driver-step-header">
+            <div>
+              <span>Etapa 2</span>
+              <strong>2. Activar localizacao</strong>
+            </div>
+            <span className="driver-step-badge">{activeTrip ? (isLocationActive ? 'Activa' : 'Disponivel') : 'Bloqueada'}</span>
           </div>
 
           <div className="driver-trip-card">
@@ -788,30 +848,9 @@ function DriverDashboard() {
             <small>Lotacao: {activeTrip ? getLotacaoLabel(activeTripLotacao) : 'Indisponivel'}</small>
           </div>
 
-          <div className="driver-trip-card">
-            <span>Lotacao do transporte</span>
-            <div className="driver-lotacao-actions">
-              {LOTACAO_OPTIONS.map((option) => (
-                <button
-                  className={`driver-lotacao-button driver-lotacao-${option.value}${
-                    activeTrip && activeTripLotacao === option.value ? ' active' : ''
-                  }`}
-                  disabled={!activeTrip || isTripStatusSaving}
-                  key={option.value}
-                  onClick={() => handleUpdateTripLotacao(option.value)}
-                  type="button"
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-            <small>
-              {activeTrip
-                ? 'Disponivel apenas durante uma viagem activa.'
-                : 'Inicie uma viagem para alterar a lotacao.'}
-            </small>
-          </div>
-
+          {!isLocationActive && activeTrip ? (
+            <div className="driver-warning">Active a localizacao para partilhar a sua posicao com os passageiros.</div>
+          ) : null}
           {locationStatus ? <div className="driver-state">{locationStatus}</div> : null}
 
           <div className="driver-actions">
@@ -833,20 +872,48 @@ function DriverDashboard() {
             </button>
           </div>
         </section>
+        ) : null}
       </section>
 
-      <section className="driver-panel driver-requests-panel">
-        <div className="driver-panel-header">
+      {activeTrip && isLocationActive ? (
+      <section className="driver-panel driver-requests-panel driver-step-card">
+        <div className="driver-panel-header driver-step-header">
           <div>
-            <span>Pedidos de Passageiros</span>
-            <strong>{rideRequests.length}</strong>
+            <span>Etapa 3</span>
+            <strong>3. Gestao da lotacao e pedidos</strong>
+            <small>Pedidos de passageiros: {rideRequests.length}</small>
+          </div>
+          <span className="driver-step-badge">{activeTrip ? 'Disponivel' : 'Bloqueada'}</span>
+        </div>
+
+        <div className="driver-trip-card">
+          <div className="driver-card-title-row">
+            <span>Actualizar lotacao</span>
+            <strong className={`driver-lotacao-badge driver-lotacao-badge-${activeTripLotacao}`}>
+              {getLotacaoLabel(activeTripLotacao)}
+            </strong>
+          </div>
+          <div className="driver-lotacao-actions">
+            {LOTACAO_OPTIONS.map((option) => (
+              <button
+                className={`driver-lotacao-button driver-lotacao-${option.value}${
+                  activeTripLotacao === option.value ? ' active' : ''
+                }`}
+                disabled={isTripStatusSaving}
+                key={option.value}
+                onClick={() => handleUpdateTripLotacao(option.value)}
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
         </div>
 
         {isRideRequestsLoading ? <div className="driver-state">A carregar pedidos...</div> : null}
 
         {!isRideRequestsLoading && rideRequests.length === 0 ? (
-          <div className="driver-state">Nenhum pedido pendente ou aceite.</div>
+          <div className="driver-empty-state">Ainda nao existem pedidos de passageiros.</div>
         ) : null}
 
         {rideRequests.length ? (
@@ -950,6 +1017,107 @@ function DriverDashboard() {
           </div>
         ) : null}
       </section>
+
+      ) : null}
+
+      {activeTrip && isLocationActive ? (
+      <section className="driver-panel driver-step-card driver-end-step">
+        <div className="driver-panel-header driver-step-header">
+          <div>
+            <span>Etapa 4</span>
+            <strong>Terminar viagem</strong>
+            <small>
+              {activeTrip
+                ? `Viagem #${activeTripId} em curso.`
+                : completedTrip
+                  ? 'Ultima viagem terminada com sucesso.'
+                  : 'Disponivel apos iniciar uma viagem.'}
+            </small>
+          </div>
+          <button
+            className="button button-danger"
+            disabled={!activeTrip || isSubmitting}
+            onClick={handleEndTrip}
+            type="button"
+          >
+            Terminar Viagem
+          </button>
+        </div>
+      </section>
+
+      ) : null}
+
+      </>
+      ) : null}
+
+      {view === 'feedback' ? (
+      <section className="driver-panel driver-feedback-panel" id="driver-feedback">
+        <div className="driver-flow-header">
+          <button
+            className="button button-secondary"
+            onClick={() => {
+              clearMessages()
+              setView('menu')
+            }}
+            type="button"
+          >
+            Voltar
+          </button>
+        </div>
+        <div className="driver-panel-header">
+          <div>
+            <span>Modulo</span>
+            <strong>Enviar Feedback</strong>
+          </div>
+        </div>
+
+        {error ? <div className="driver-error">{error}</div> : null}
+        {success ? <div className="driver-success">{success}</div> : null}
+
+        <form className="driver-feedback-form" onSubmit={handleFeedbackSubmit}>
+          <label className="driver-field">
+            <span>Tipo</span>
+            <select name="type" onChange={handleFeedbackInputChange} value={feedbackForm.type}>
+              {FEEDBACK_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="driver-field">
+            <span>Mensagem</span>
+            <textarea
+              name="message"
+              onChange={handleFeedbackInputChange}
+              placeholder="Descreva o problema, sugestao ou informacao operacional."
+              required
+              rows="5"
+              value={feedbackForm.message}
+            />
+          </label>
+
+          <div className="driver-actions">
+            <button className="button driver-add-vehicle-button" disabled={isFeedbackSubmitting} type="submit">
+              {isFeedbackSubmitting ? 'A enviar...' : 'Enviar Feedback'}
+            </button>
+            {success ? (
+              <button
+                className="button button-secondary"
+                onClick={() => {
+                  clearMessages()
+                  setView('menu')
+                }}
+                type="button"
+              >
+                Voltar ao menu inicial
+              </button>
+            ) : null}
+          </div>
+        </form>
+      </section>
+      ) : null}
 
       {isVehicleFormOpen ? (
         <div className="driver-modal-backdrop" role="presentation">

@@ -6,7 +6,7 @@ function LandingPage() {
     <main className="landing-page">
       <nav className="landing-nav" aria-label="Navegacao principal">
         <Link className="brand" to="/">
-          Ahifambe
+          Lili Transport
         </Link>
         <div className="nav-actions">
           <Link className="text-link" to="/login">
@@ -23,7 +23,7 @@ function LandingPage() {
           <span className="eyebrow">Mobilidade urbana inteligente</span>
           <h1>Viaja com mais controlo pela cidade.</h1>
           <p>
-            Ahifambe liga passageiros, motoristas e administradores numa
+            Lili Transport liga passageiros, motoristas e administradores numa
             experiencia simples para gerir viagens, rotas e operacao diaria.
           </p>
           <div className="hero-actions">
@@ -43,7 +43,7 @@ function LandingPage() {
               <span className="route-point route-point-start"></span>
               <span className="route-point route-point-end"></span>
               <div className="ride-card">
-                <strong>Ahifambe</strong>
+                <strong>Lili Transport</strong>
                 <span>Viagem activa</span>
               </div>
             </div>

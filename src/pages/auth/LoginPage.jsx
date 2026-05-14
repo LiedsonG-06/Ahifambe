@@ -68,7 +68,7 @@ function LoginPage() {
     <main className="auth-page">
       <section className="auth-panel">
         <Link className="brand auth-brand" to="/">
-          Ahifambe
+          Lili Transport
         </Link>
         <h1>Entrar</h1>
         <p>Acede ao painel conforme o teu perfil.</p>
