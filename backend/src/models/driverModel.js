@@ -2,7 +2,7 @@ const { pool } = require('../config/db');
 
 const createForUser = async (userId, connection = pool) => {
   const [result] = await connection.execute(
-    'INSERT INTO drivers (user_id) VALUES (?)',
+    'INSERT INTO drivers (user_id, status) VALUES (?, \'active\')',
     [userId]
   );
 
@@ -11,7 +11,7 @@ const createForUser = async (userId, connection = pool) => {
 
 const create = async ({ user_id, license_number, phone }) => {
   const [result] = await pool.execute(
-    'INSERT INTO drivers (user_id, license_number, phone, status) VALUES (?, ?, ?, \'pending\')',
+    'INSERT INTO drivers (user_id, license_number, phone, status) VALUES (?, ?, ?, \'active\')',
     [user_id, license_number, phone]
   );
 
