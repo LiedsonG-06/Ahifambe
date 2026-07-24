@@ -1,0 +1,3 @@
+const AppError=require('../utils/AppError');
+const createRateLimiter=({windowMs,max})=>{const clients=new Map();return(req,res,next)=>{const now=Date.now(),key=req.ip||req.socket.remoteAddress||'unknown';let entry=clients.get(key);if(!entry||entry.resetAt<=now){entry={count:0,resetAt:now+windowMs};clients.set(key,entry)}entry.count+=1;res.setHeader('RateLimit-Limit',max);res.setHeader('RateLimit-Remaining',Math.max(0,max-entry.count));res.setHeader('RateLimit-Reset',Math.ceil(entry.resetAt/1000));if(entry.count>max)return next(new AppError('Too many authentication attempts. Try again later.',429));if(clients.size>10000)for(const[k,v]of clients)if(v.resetAt<=now)clients.delete(k);return next()}};
+module.exports={createRateLimiter};

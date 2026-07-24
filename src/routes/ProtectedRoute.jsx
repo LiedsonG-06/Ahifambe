@@ -12,7 +12,11 @@ function getDashboardPath(role) {
 }
 
 function ProtectedRoute({ allowedRoles }) {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, isSessionLoading, user } = useAuth()
+
+  if (isSessionLoading) {
+    return <div className="admin-state">A validar sessão...</div>
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />

@@ -61,7 +61,7 @@ const updateLocation = async (locationInput) => {
   }
 
   if (Number(trip.driver_id) !== Number(driver.id)) {
-    throw new AppError('Driver does not belong to the indicated trip.', 400);
+    throw new AppError('Driver does not belong to the indicated trip.', 403);
   }
 
   const locationId = await locationModel.create({

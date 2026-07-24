@@ -10,6 +10,7 @@ const AppError = require('../utils/AppError');
 
 const VALID_ROLES = ['admin', 'driver', 'passenger'];
 const PUBLIC_REGISTRATION_ROLES = ['driver', 'passenger'];
+const MIN_PASSWORD_LENGTH = 8;
 const BLOCKED_ACCOUNT_MESSAGE = 'A sua conta foi bloqueada. Contacte o administrador do sistema.';
 
 const sanitizeUser = (user) => ({
@@ -26,6 +27,10 @@ const register = async ({ name, email, password, role }) => {
 
   if (!normalizedName || !normalizedEmail || !password || !normalizedRole) {
     throw new AppError('Nome, email, password and role are required.', 400);
+  }
+
+  if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
+    throw new AppError('Password must contain at least 8 characters.', 400);
   }
 
   if (!VALID_ROLES.includes(normalizedRole)) {
@@ -121,7 +126,10 @@ const login = async ({ email, password }) => {
   };
 };
 
-module.exports = {
-  register,
-  login,
+const getCurrentUser = async (id) => {
+  const user = await userModel.findById(id);
+  if (!user) throw new AppError('Authenticated user no longer exists.', 401);
+  return { user: sanitizeUser(user) };
 };
+
+module.exports = { register, login, getCurrentUser };

@@ -78,8 +78,10 @@ function RegisterPage() {
             onChange={handleChange}
             autoComplete="new-password"
             required
-            minLength="6"
+            minLength="8"
           />
+
+          <small>A password deve ter pelo menos 8 caracteres.</small>
 
           <label htmlFor="role">Tipo de conta</label>
           <select id="role" name="role" value={formData.role} onChange={handleChange}>

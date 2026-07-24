@@ -107,7 +107,7 @@ const endTrip = async (idInput, userIdInput) => {
   }
 
   if (Number(existingTrip.driver_id) !== Number(driver.id)) {
-    throw new AppError('Driver does not belong to the indicated trip.', 400);
+    throw new AppError('Driver does not belong to the indicated trip.', 403);
   }
 
   if (existingTrip.status !== 'in_progress') {
@@ -154,7 +154,7 @@ const updateTripStatus = async (idInput, userIdInput, statusInput) => {
   ensureActiveDriver(driver);
 
   if (Number(existingTrip.driver_id) !== Number(driver.id)) {
-    throw new AppError('Driver does not belong to the indicated trip.', 400);
+    throw new AppError('Driver does not belong to the indicated trip.', 403);
   }
 
   if (existingTrip.status !== 'in_progress') {

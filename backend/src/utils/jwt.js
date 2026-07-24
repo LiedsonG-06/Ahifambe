@@ -12,6 +12,7 @@ const generateToken = (user) => {
     env.jwt.secret,
     {
       expiresIn: env.jwt.expiresIn,
+      algorithm: env.jwt.algorithm,
     }
   );
 };

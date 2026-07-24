@@ -18,7 +18,6 @@ const login = async (req, res) => {
   res.status(200).json(result);
 };
 
-module.exports = {
-  register,
-  login,
-};
+const me = async (req, res) => res.status(200).json(await authService.getCurrentUser(req.user.id));
+
+module.exports = { register, login, me };
