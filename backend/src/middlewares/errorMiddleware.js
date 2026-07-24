@@ -1,4 +1,4 @@
-const errorMiddleware = (error, req, res, next) => {
+const errorMiddleware = (error, req, res, _next) => {
   const operational=Boolean(error.isOperational)&&Number.isInteger(error.statusCode);
   const statusCode=operational?error.statusCode:500;
   if(!operational) console.error('Unexpected server error:', error.stack || error.message);

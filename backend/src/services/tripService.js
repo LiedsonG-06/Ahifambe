@@ -111,7 +111,7 @@ const endTrip = async (idInput, userIdInput) => {
   }
 
   if (existingTrip.status !== 'in_progress') {
-    throw new AppError('Only trips in progress can be ended.', 400);
+    throw new AppError('Only trips in progress can be ended.', 409);
   }
 
   const affectedRows = await tripModel.complete(id);
@@ -158,7 +158,7 @@ const updateTripStatus = async (idInput, userIdInput, statusInput) => {
   }
 
   if (existingTrip.status !== 'in_progress') {
-    throw new AppError('Only trips in progress can update lotacao.', 400);
+    throw new AppError('Only trips in progress can update lotacao.', 409);
   }
 
   const affectedRows = await tripModel.updateLotacao(id, lotacao);

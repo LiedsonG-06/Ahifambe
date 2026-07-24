@@ -83,15 +83,6 @@ function getLotacaoLabel(value) {
   return LOTACAO_OPTIONS.find((option) => option.value === value)?.label || 'Vazio'
 }
 
-function getUserRoleLabel(role) {
-  const labels = {
-    driver: 'Motorista',
-    motorista: 'Motorista',
-  }
-
-  return labels[String(role || '').toLowerCase()] || role || 'Perfil nao informado'
-}
-
 function getRideRequestStatusLabel(status) {
   const labels = {
     pending: 'Pendente',

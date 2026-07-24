@@ -1,29 +1,31 @@
 {
-  "name": "ahifambe-backend",
-  "version": "1.0.0",
-  "description": "Backend API for Ahifambe public transport management MVP",
-  "main": "src/server.js",
-  "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
-  },
-  "keywords": [
-    "ahifambe",
-    "express",
-    "mysql",
-    "jwt"
-  ],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "bcrypt": "^5.1.1",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.11.5"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.9"
-  }
+    "name":  "ahifambe-backend",
+    "version":  "1.0.0",
+    "description":  "Backend API for Ahifambe public transport management MVP",
+    "main":  "src/server.js",
+    "scripts":  {
+                    "start":  "node src/server.js",
+                    "dev":  "nodemon src/server.js",
+                    "lint":  "npx eslint src test",
+                    "test":  "node --test --test-isolation=none test/*.test.cjs"
+                },
+    "keywords":  [
+                     "ahifambe",
+                     "express",
+                     "mysql",
+                     "jwt"
+                 ],
+    "author":  "",
+    "license":  "ISC",
+    "dependencies":  {
+                         "bcrypt":  "^5.1.1",
+                         "cors":  "^2.8.5",
+                         "dotenv":  "^16.4.7",
+                         "express":  "^4.21.2",
+                         "jsonwebtoken":  "^9.0.2",
+                         "mysql2":  "^3.11.5"
+                     },
+    "devDependencies":  {
+                            "nodemon":  "^3.1.9"
+                        }
 }
