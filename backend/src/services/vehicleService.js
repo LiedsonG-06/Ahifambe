@@ -2,141 +2,97 @@ const vehicleModel = require('../models/vehicleModel');
 const driverModel = require('../models/driverModel');
 const AppError = require('../utils/AppError');
 
-const ALLOWED_VEHICLE_STATUSES = new Set(['active', 'inactive', 'maintenance']);
-
+const ALLOWED_STATUSES = new Set(['active', 'inactive', 'maintenance']);
 const normalizeString = (value) => (typeof value === 'string' ? value.trim() : '');
-
 const normalizeDriverId = (value) => {
-  if (value === undefined || value === null || value === '') {
-    return null;
-  }
-
-  const driverId = Number(value);
-  return Number.isInteger(driverId) && driverId > 0 ? driverId : null;
+  if (value === undefined || value === null || value === '') return null;
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+};
+const normalizeVehicleId = (value) => {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
 };
 
-const ensureActiveDriver = (driver) => {
-  if (driver.status !== 'active') {
-    throw new AppError('Driver account is not active.', 403);
+const validateInput = async (input, excludeId = null) => {
+  const plate_number = normalizeString(input.plate_number);
+  const model = normalizeString(input.model);
+  const capacity = Number(input.capacity);
+  const status = normalizeString(input.status || 'active').toLowerCase();
+  const hasDriverId = Object.prototype.hasOwnProperty.call(input, 'driver_id');
+  const driver_id = normalizeDriverId(input.driver_id);
+
+  if (!plate_number) throw new AppError('plate_number is required.', 400);
+  if (!model) throw new AppError('model is required.', 400);
+  if (!Number.isInteger(capacity) || capacity <= 0) throw new AppError('capacity is required and must be greater than 0.', 400);
+  if (!ALLOWED_STATUSES.has(status)) throw new AppError('Invalid vehicle status.', 400);
+  if (hasDriverId && input.driver_id !== null && input.driver_id !== '' && !driver_id) {
+    throw new AppError('driver_id must be a valid driver id.', 400);
   }
+  if (driver_id && !(await driverModel.findById(driver_id))) throw new AppError('Driver not found.', 404);
+  if (await vehicleModel.findByPlateNumber(plate_number, excludeId)) throw new AppError('plate_number is already registered.', 409);
+
+  return { driver_id, plate_number, model, capacity, status };
 };
 
-const createVehicle = async (vehicleInput) => {
-  const plate_number = normalizeString(vehicleInput.plate_number);
-  const model = normalizeString(vehicleInput.model);
-  const capacity = Number(vehicleInput.capacity);
-  let driver_id = normalizeDriverId(vehicleInput.driver_id);
-  const user = vehicleInput.user;
-
-  if (!plate_number) {
-    throw new AppError('plate_number is required.', 400);
-  }
-
-  if (!user) {
-    throw new AppError('Authenticated user is required.', 401);
-  }
-
-  if (!Number.isInteger(capacity) || capacity <= 0) {
-    throw new AppError('capacity is required and must be greater than 0.', 400);
-  }
-
-  if (user.role === 'driver') {
-    if (Object.prototype.hasOwnProperty.call(vehicleInput, 'driver_id')) {
-      throw new AppError('driver_id must not be sent by driver users.', 400);
-    }
-
-    const driver = await driverModel.findByUserId(user.id);
-
-    if (!driver) {
-      throw new AppError('Driver profile not found for authenticated user.', 404);
-    }
-
-    ensureActiveDriver(driver);
-
-    driver_id = driver.id;
-  }
-
-  const existingVehicle = await vehicleModel.findByPlateNumber(plate_number);
-
-  if (existingVehicle) {
-    throw new AppError('plate_number is already registered.', 409);
-  }
-
-  const vehicleId = await vehicleModel.create({
-    driver_id,
-    plate_number,
-    model,
-    capacity,
-  });
-  const vehicle = await vehicleModel.findById(vehicleId);
-
-  return {
-    message: 'Vehicle created successfully.',
-    vehicle,
-  };
+const createVehicle = async (input) => {
+  const data = await validateInput(input);
+  const id = await vehicleModel.create(data);
+  return { message: 'Vehicle created successfully.', vehicle: await vehicleModel.findById(id) };
 };
 
 const listVehicles = async (user) => {
   if (user?.role === 'driver') {
     const driver = await driverModel.findByUserId(user.id);
-
-    if (!driver) {
-      throw new AppError('Driver profile not found for authenticated user.', 404);
-    }
-
+    if (!driver) throw new AppError('Driver profile not found for authenticated user.', 404);
     return vehicleModel.findByDriverId(driver.id);
   }
-
   return vehicleModel.findAll();
 };
 
-const updateVehicleStatus = async ({ vehicleId, status, user }) => {
+const updateVehicle = async (idInput, input) => {
+  const id = normalizeVehicleId(idInput);
+  if (!id) throw new AppError('Valid vehicle id is required.', 400);
+  const current = await vehicleModel.findById(id);
+  if (!current) throw new AppError('Vehicle not found.', 404);
+  const data = await validateInput(input, id);
+  const active = await vehicleModel.hasInProgressTrip(id);
+  if (active && Number(data.driver_id) !== Number(current.driver_id)) {
+    throw new AppError('Vehicle cannot be transferred while it has a trip in progress.', 409);
+  }
+  if (active && data.status !== 'active') {
+    throw new AppError('Vehicle cannot be deactivated while it has a trip in progress.', 409);
+  }
+  await vehicleModel.update(id, data);
+  return { message: 'Vehicle updated successfully.', vehicle: await vehicleModel.findById(id) };
+};
+
+const updateVehicleStatus = async ({ vehicleId, status }) => {
+  const id = normalizeVehicleId(vehicleId);
   const normalizedStatus = normalizeString(status).toLowerCase();
-  const normalizedVehicleId = Number(vehicleId);
-
-  if (!Number.isInteger(normalizedVehicleId) || normalizedVehicleId <= 0) {
-    throw new AppError('Valid vehicle id is required.', 400);
+  if (!id) throw new AppError('Valid vehicle id is required.', 400);
+  if (!ALLOWED_STATUSES.has(normalizedStatus)) throw new AppError('Invalid vehicle status.', 400);
+  const vehicle = await vehicleModel.findById(id);
+  if (!vehicle) throw new AppError('Vehicle not found.', 404);
+  if (normalizedStatus !== 'active' && await vehicleModel.hasInProgressTrip(id)) {
+    throw new AppError('Vehicle cannot be deactivated while it has a trip in progress.', 409);
   }
-
-  if (!ALLOWED_VEHICLE_STATUSES.has(normalizedStatus)) {
-    throw new AppError('Invalid vehicle status.', 400);
-  }
-
-  if (!user) {
-    throw new AppError('Authenticated user is required.', 401);
-  }
-
-  const vehicle = await vehicleModel.findById(normalizedVehicleId);
-
-  if (!vehicle) {
-    throw new AppError('Vehicle not found.', 404);
-  }
-
-  if (user.role === 'driver') {
-    const driver = await driverModel.findByUserId(user.id);
-
-    if (!driver) {
-      throw new AppError('Driver profile not found for authenticated user.', 404);
-    }
-
-    ensureActiveDriver(driver);
-
-    if (Number(vehicle.driver_id) !== Number(driver.id)) {
-      throw new AppError('You do not have permission to update this vehicle.', 403);
-    }
-  }
-
-  await vehicleModel.updateStatus(normalizedVehicleId, normalizedStatus);
-  const updatedVehicle = await vehicleModel.findById(normalizedVehicleId);
-
-  return {
-    message: 'Vehicle status updated successfully.',
-    vehicle: updatedVehicle,
-  };
+  await vehicleModel.updateStatus(id, normalizedStatus);
+  return { message: 'Vehicle status updated successfully.', vehicle: await vehicleModel.findById(id) };
 };
 
-module.exports = {
-  createVehicle,
-  listVehicles,
-  updateVehicleStatus,
+const deleteVehicle = async (idInput) => {
+  const id = normalizeVehicleId(idInput);
+  if (!id) throw new AppError('Valid vehicle id is required.', 400);
+  if (!(await vehicleModel.findById(id))) throw new AppError('Vehicle not found.', 404);
+  if (await vehicleModel.hasInProgressTrip(id)) throw new AppError('Vehicle cannot be deleted while it has a trip in progress.', 409);
+  if (await vehicleModel.hasAnyTrip(id)) throw new AppError('Vehicle cannot be deleted because it is linked to trip history.', 409);
+  try { await vehicleModel.remove(id); }
+  catch (error) {
+    if (error?.code === 'ER_ROW_IS_REFERENCED_2') throw new AppError('Vehicle cannot be deleted because it is linked to trips.', 409);
+    throw error;
+  }
+  return { message: 'Vehicle deleted successfully.' };
 };
+
+module.exports = { createVehicle, listVehicles, updateVehicle, updateVehicleStatus, deleteVehicle };

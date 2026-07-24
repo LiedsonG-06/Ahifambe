@@ -709,17 +709,6 @@ function DriverDashboard() {
               <span>Minhas rotas</span>
               <strong>{routes.length}</strong>
             </div>
-            <button
-              className="button driver-add-vehicle-button"
-              disabled={isLoading || Boolean(activeTrip)}
-              onClick={() => {
-                clearMessages()
-                setIsRouteFormOpen(true)
-              }}
-              type="button"
-            >
-              Adicionar Rota
-            </button>
           </div>
 
           <label className="driver-field">
@@ -758,17 +747,6 @@ function DriverDashboard() {
               <span>Minhas viaturas</span>
               <strong>{driverVehicles.length}</strong>
             </div>
-            <button
-              className="button driver-add-vehicle-button"
-              disabled={isLoading}
-              onClick={() => {
-                clearMessages()
-                setIsVehicleFormOpen(true)
-              }}
-              type="button"
-            >
-              Adicionar Viatura
-            </button>
           </div>
 
           {driverVehicles.length ? (

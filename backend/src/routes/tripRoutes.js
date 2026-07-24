@@ -14,5 +14,6 @@ router.patch('/:id/end', authorize('driver'), asyncHandler(tripController.endTri
 router.patch('/:id/status', authorize('driver'), asyncHandler(tripController.updateTripStatus));
 router.get('/active', authorize('admin', 'passenger'), asyncHandler(tripController.listActiveTrips));
 router.get('/', authorize('admin'), asyncHandler(tripController.listTrips));
+router.get('/:id', authorize('admin'), asyncHandler(tripController.getTripDetails));
 
 module.exports = router;

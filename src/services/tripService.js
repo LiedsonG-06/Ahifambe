@@ -15,3 +15,14 @@ export function endTrip(id) {
 export function updateTripStatus(id, { lotacao }) {
   return api.patch(`/trips/${id}/status`, { lotacao }).then((response) => response.data)
 }
+
+export function getAdminTrips(params = {}) {
+  return api.get('/trips', { params }).then((response) => response.data)
+}
+
+export function getAdminTrip(id) {
+  return api.get(`/trips/${id}`).then((response) => response.data?.trip)
+}
+export function getActiveTrips() {
+  return api.get('/trips/active').then((response) => Array.isArray(response.data) ? response.data : [])
+}

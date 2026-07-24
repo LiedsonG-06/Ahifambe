@@ -36,12 +36,12 @@ const updateLocation = async (locationInput) => {
     throw new AppError('Authenticated user is required.', 401);
   }
 
-  if (latitude === null) {
-    throw new AppError('latitude is required and must be numeric.', 400);
+  if (latitude === null || latitude < -90 || latitude > 90) {
+    throw new AppError('latitude must be a valid coordinate between -90 and 90.', 400);
   }
 
-  if (longitude === null) {
-    throw new AppError('longitude is required and must be numeric.', 400);
+  if (longitude === null || longitude < -180 || longitude > 180) {
+    throw new AppError('longitude must be a valid coordinate between -180 and 180.', 400);
   }
 
   const trip = await locationModel.findTripById(trip_id);

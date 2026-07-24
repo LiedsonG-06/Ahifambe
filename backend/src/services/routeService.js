@@ -24,7 +24,12 @@ const createRoute = async (routeInput) => {
   const origem = normalizeString(routeInput.origem);
   const destino = normalizeString(routeInput.destino);
   const user = routeInput.user;
+  const hasDriverId = Object.prototype.hasOwnProperty.call(routeInput, 'driver_id');
   let driver_id = normalizeDriverId(routeInput.driver_id);
+
+  if (hasDriverId && routeInput.driver_id !== null && routeInput.driver_id !== '' && !driver_id) {
+    throw new AppError('driver_id must be a valid driver id.', 400);
+  }
 
   if (!nome || !origem || !destino) {
     throw new AppError('nome, origem and destino are required.', 400);
@@ -84,6 +89,12 @@ const updateRoute = async (routeId, routeInput) => {
   const nome = normalizeString(routeInput.nome);
   const origem = normalizeString(routeInput.origem);
   const destino = normalizeString(routeInput.destino);
+  const hasDriverId = Object.prototype.hasOwnProperty.call(routeInput, 'driver_id');
+  const driver_id = normalizeDriverId(routeInput.driver_id);
+
+  if (hasDriverId && routeInput.driver_id !== null && routeInput.driver_id !== '' && !driver_id) {
+    throw new AppError('driver_id must be a valid driver id.', 400);
+  }
 
   if (!Number.isInteger(id) || id <= 0) {
     throw new AppError('Route id is invalid.', 400);
@@ -99,7 +110,14 @@ const updateRoute = async (routeId, routeInput) => {
     throw new AppError('Route not found.', 404);
   }
 
-  await routeModel.update(id, { nome, origem, destino });
+  if (driver_id) {
+    const driver = await driverModel.findById(driver_id);
+    if (!driver) {
+      throw new AppError('Driver not found.', 404);
+    }
+  }
+
+  await routeModel.update(id, { driver_id, nome, origem, destino });
   const updatedRoute = await routeModel.findById(id);
 
   return {
@@ -119,6 +137,10 @@ const deleteRoute = async (routeId) => {
 
   if (!route) {
     throw new AppError('Route not found.', 404);
+  }
+
+  if (await routeModel.hasInProgressTrip(id)) {
+    throw new AppError('Route cannot be deleted because it has a trip in progress.', 409);
   }
 
   try {

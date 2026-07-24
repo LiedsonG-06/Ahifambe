@@ -3,7 +3,9 @@ import AdminDashboard from '../pages/admin/AdminDashboard'
 import AdminDriversPage from '../pages/admin/AdminDriversPage'
 import AdminFeedbackPage from '../pages/admin/AdminFeedbackPage'
 import AdminRoutesPage from '../pages/admin/AdminRoutesPage'
+import AdminTripsPage from '../pages/admin/AdminTripsPage'
 import AdminUsersPage from '../pages/admin/AdminUsersPage'
+import AdminVehiclesPage from '../pages/admin/AdminVehiclesPage'
 import LoginPage from '../pages/auth/LoginPage'
 import RegisterPage from '../pages/auth/RegisterPage'
 import DriverDashboard from '../pages/driver/DriverDashboard'
@@ -24,6 +26,8 @@ function AppRoutes() {
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/drivers" element={<AdminDriversPage />} />
           <Route path="/admin/routes" element={<AdminRoutesPage />} />
+          <Route path="/admin/vehicles" element={<AdminVehiclesPage />} />
+          <Route path="/admin/trips" element={<AdminTripsPage />} />
           <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
         </Route>
 

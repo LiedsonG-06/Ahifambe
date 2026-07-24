@@ -1,40 +1,7 @@
 const vehicleService = require('../services/vehicleService');
-
-const createVehicle = async (req, res) => {
-  const { driver_id, plate_number, model, capacity } = req.body;
-  const vehicleInput = {
-    plate_number,
-    model,
-    capacity,
-    user: req.user,
-  };
-
-  if (Object.prototype.hasOwnProperty.call(req.body, 'driver_id')) {
-    vehicleInput.driver_id = driver_id;
-  }
-
-  const result = await vehicleService.createVehicle(vehicleInput);
-
-  res.status(201).json(result);
-};
-
-const listVehicles = async (req, res) => {
-  const vehicles = await vehicleService.listVehicles(req.user);
-  res.status(200).json(vehicles);
-};
-
-const updateVehicleStatus = async (req, res) => {
-  const result = await vehicleService.updateVehicleStatus({
-    vehicleId: req.params.id,
-    status: req.body.status,
-    user: req.user,
-  });
-
-  res.status(200).json(result);
-};
-
-module.exports = {
-  createVehicle,
-  listVehicles,
-  updateVehicleStatus,
-};
+const createVehicle = async (req, res) => res.status(201).json(await vehicleService.createVehicle(req.body));
+const listVehicles = async (req, res) => res.status(200).json(await vehicleService.listVehicles(req.user));
+const updateVehicle = async (req, res) => res.status(200).json(await vehicleService.updateVehicle(req.params.id, req.body));
+const updateVehicleStatus = async (req, res) => res.status(200).json(await vehicleService.updateVehicleStatus({ vehicleId: req.params.id, status: req.body.status }));
+const deleteVehicle = async (req, res) => res.status(200).json(await vehicleService.deleteVehicle(req.params.id));
+module.exports = { createVehicle, listVehicles, updateVehicle, updateVehicleStatus, deleteVehicle };

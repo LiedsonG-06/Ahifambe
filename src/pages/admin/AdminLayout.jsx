@@ -19,6 +19,8 @@ function AdminLayout({ children, eyebrow, title, description }) {
           <NavLink to="/admin/users">Utilizadores</NavLink>
           <NavLink to="/admin/drivers">Motoristas</NavLink>
           <NavLink to="/admin/routes">Rotas</NavLink>
+          <NavLink to="/admin/vehicles">Viaturas</NavLink>
+          <NavLink to="/admin/trips">Viagens</NavLink>
           <NavLink to="/admin/feedback">Feedback</NavLink>
         </nav>
 

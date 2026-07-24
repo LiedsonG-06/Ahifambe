@@ -47,13 +47,22 @@ const assignToDriverIfUnassigned = async (id, driverId) => {
   return result.affectedRows;
 };
 
-const update = async (id, { nome, origem, destino }) => {
+const update = async (id, { driver_id, nome, origem, destino }) => {
   const [result] = await pool.execute(
-    'UPDATE routes SET nome = ?, origem = ?, destino = ? WHERE id = ?',
-    [nome, origem, destino, id]
+    'UPDATE routes SET driver_id = ?, nome = ?, origem = ?, destino = ? WHERE id = ?',
+    [driver_id, nome, origem, destino, id]
   );
 
   return result.affectedRows;
+};
+
+const hasInProgressTrip = async (id) => {
+  const [rows] = await pool.execute(
+    "SELECT id FROM trips WHERE route_id = ? AND status = 'in_progress' LIMIT 1",
+    [id]
+  );
+
+  return rows.length > 0;
 };
 
 const remove = async (id) => {
@@ -69,5 +78,6 @@ module.exports = {
   findByDriverId,
   assignToDriverIfUnassigned,
   update,
+  hasInProgressTrip,
   remove,
 };
