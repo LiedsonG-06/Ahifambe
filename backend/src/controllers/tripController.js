@@ -32,10 +32,16 @@ const listTrips = async (req, res) => {
   res.status(200).json(trips);
 };
 
+const getMyActiveTrip = async (req, res) => {
+  const result = await tripService.getMyActiveTrip(req.user.id);
+  res.status(200).json(result);
+};
+
 module.exports = {
   startTrip,
   endTrip,
   updateTripStatus,
   listActiveTrips,
   listTrips,
+  getMyActiveTrip,
 };

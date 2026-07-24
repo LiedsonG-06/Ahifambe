@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.use(authenticate);
 
+router.get('/my-active', authorize('driver'), asyncHandler(tripController.getMyActiveTrip));
 router.post('/start', authorize('driver'), asyncHandler(tripController.startTrip));
 router.patch('/:id/end', authorize('driver'), asyncHandler(tripController.endTrip));
 router.patch('/:id/status', authorize('driver'), asyncHandler(tripController.updateTripStatus));

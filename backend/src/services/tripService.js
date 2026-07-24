@@ -1,5 +1,6 @@
 const tripModel = require('../models/tripModel');
 const driverModel = require('../models/driverModel');
+const routeModel = require('../models/routeModel');
 const AppError = require('../utils/AppError');
 
 const normalizeId = (value) => {
@@ -44,10 +45,6 @@ const startTrip = async (tripInput) => {
 
   ensureActiveDriver(driver);
 
-  if (Number(route.driver_id) !== Number(driver.id)) {
-    throw new AppError('Route does not belong to this driver.', 403);
-  }
-
   const vehicle = await tripModel.findVehicleById(vehicle_id);
   if (!vehicle) {
     throw new AppError('Vehicle not found.', 404);
@@ -64,6 +61,15 @@ const startTrip = async (tripInput) => {
   const activeTrip = await tripModel.findInProgressByDriverId(driver.id);
   if (activeTrip) {
     throw new AppError('Driver already has a trip in progress.', 409);
+  }
+
+  if (route.driver_id === null) {
+    await routeModel.assignToDriverIfUnassigned(route_id, driver.id);
+  }
+
+  const assignedRoute = await tripModel.findRouteById(route_id);
+  if (Number(assignedRoute?.driver_id) !== Number(driver.id)) {
+    throw new AppError('Route does not belong to this driver.', 403);
   }
 
   const tripId = await tripModel.create({ route_id, driver_id: driver.id, vehicle_id });
@@ -168,10 +174,20 @@ const listTrips = async () => {
   return tripModel.findAll();
 };
 
+const getMyActiveTrip = async (userIdInput) => {
+  const user_id = normalizeId(userIdInput);
+  if (!user_id) throw new AppError('Authenticated user is required.', 401);
+  const driver = await driverModel.findByUserId(user_id);
+  if (!driver) throw new AppError('Driver profile not found for authenticated user.', 404);
+  ensureActiveDriver(driver);
+  return { trip: await tripModel.findActiveDetailsByDriverId(driver.id) };
+};
+
 module.exports = {
   startTrip,
   endTrip,
   updateTripStatus,
   listActiveTrips,
   listTrips,
+  getMyActiveTrip,
 };

@@ -119,7 +119,7 @@ const submitTripRating = async (feedbackInput) => {
     throw new AppError('Trip not found.', 404);
   }
 
-  if (trip.status !== 'completed') {
+  if (!['completed', 'finished'].includes(trip.status)) {
     throw new AppError('Feedback can only be submitted for completed trips.', 400);
   }
 

@@ -67,9 +67,23 @@ const findInProgressByDriverId = async (driverId) => {
   return rows[0] || null;
 };
 
+const findActiveDetailsByDriverId = async (driverId) => {
+  const [rows] = await pool.execute(
+    `SELECT t.*, r.nome AS route_nome, r.origem, r.destino,
+      v.plate_number, v.model, v.capacity, v.status AS vehicle_status
+    FROM trips t
+    INNER JOIN routes r ON r.id = t.route_id
+    LEFT JOIN vehicles v ON v.id = t.vehicle_id
+    WHERE t.driver_id = ? AND t.status = 'in_progress'
+    ORDER BY t.departure_time DESC LIMIT 1`,
+    [driverId]
+  );
+  return rows[0] || null;
+};
+
 const complete = async (id) => {
   await pool.execute(
-    "UPDATE trips SET status = 'completed', arrival_time = NOW() WHERE id = ?",
+    "UPDATE trips SET status = 'finished', arrival_time = NOW() WHERE id = ? AND status = 'in_progress'",
     [id]
   );
 };
@@ -147,6 +161,7 @@ module.exports = {
   findDriverById,
   findVehicleById,
   findInProgressByDriverId,
+  findActiveDetailsByDriverId,
   complete,
   updateLotacao,
   findActive,

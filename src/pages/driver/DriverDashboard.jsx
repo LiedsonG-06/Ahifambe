@@ -6,10 +6,9 @@ import { createFeedback } from '../../services/feedbackService'
 import { updateLocation } from '../../services/locationService'
 import { acceptRideRequest, getDriverRideRequests, rejectRideRequest } from '../../services/rideRequestService'
 import { createRoute, getRoutes } from '../../services/routeService'
-import { endTrip, startTrip, updateTripStatus } from '../../services/tripService'
+import { endTrip, getMyActiveTrip, startTrip, updateTripStatus } from '../../services/tripService'
 import { createVehicle, getVehicles, updateVehicleStatus } from '../../services/vehicleService'
 
-const ACTIVE_TRIP_STORAGE_KEY = 'ahifambe_active_trip'
 const INITIAL_VEHICLE_FORM = {
   plate_number: '',
   model: '',
@@ -49,21 +48,6 @@ const PASSENGER_MARKER_ICON = L.divIcon({
 
 function getApiErrorMessage(error) {
   return error?.response?.data?.message || error.message || 'Nao foi possivel concluir a operacao.'
-}
-
-function readStoredActiveTrip() {
-  const storedTrip = localStorage.getItem(ACTIVE_TRIP_STORAGE_KEY)
-
-  if (!storedTrip) {
-    return null
-  }
-
-  try {
-    return JSON.parse(storedTrip)
-  } catch {
-    localStorage.removeItem(ACTIVE_TRIP_STORAGE_KEY)
-    return null
-  }
 }
 
 function getTripId(trip) {
@@ -175,7 +159,7 @@ function DriverDashboard() {
   const [vehicles, setVehicles] = useState([])
   const [selectedRouteId, setSelectedRouteId] = useState('')
   const [selectedVehicleId, setSelectedVehicleId] = useState('')
-  const [activeTrip, setActiveTrip] = useState(() => readStoredActiveTrip())
+  const [activeTrip, setActiveTrip] = useState(null)
   const [completedTrip, setCompletedTrip] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -214,22 +198,17 @@ function DriverDashboard() {
 
   useEffect(() => {
     activeTripRef.current = activeTrip
-
-    if (activeTrip) {
-      localStorage.setItem(ACTIVE_TRIP_STORAGE_KEY, JSON.stringify(activeTrip))
-    } else {
-      localStorage.removeItem(ACTIVE_TRIP_STORAGE_KEY)
-    }
   }, [activeTrip])
 
   useEffect(() => {
     let isMounted = true
 
-    Promise.all([getRoutes(), getVehicles()])
-      .then(([routesData, vehiclesData]) => {
+    Promise.all([getRoutes(), getVehicles(), getMyActiveTrip()])
+      .then(([routesData, vehiclesData, activeTripData]) => {
         if (isMounted) {
           setRoutes(routesData)
           setVehicles(vehiclesData)
+          setActiveTrip(activeTripData)
         }
       })
       .catch((apiError) => {
@@ -721,6 +700,10 @@ function DriverDashboard() {
             </select>
           </label>
 
+          {!isLoading && routes.length === 0 ? (
+            <div className="driver-warning">Não existem rotas disponíveis. Contacte o administrador.</div>
+          ) : null}
+
           <div className="driver-vehicle-summary">
             <div>
               <span>Minhas rotas</span>
@@ -828,6 +811,17 @@ function DriverDashboard() {
             >
               Iniciar Viagem
             </button>
+            {!activeTrip && !isLoading && !canStartTrip ? (
+              <small className="driver-state">
+                {routes.length === 0
+                  ? 'Não é possível iniciar uma viagem sem uma rota disponível.'
+                  : !selectedRouteId
+                    ? 'Seleccione uma rota para iniciar a viagem.'
+                    : !selectedVehicleId
+                      ? 'Seleccione uma viatura para iniciar a viagem.'
+                      : 'A viatura seleccionada deve estar activa.'}
+              </small>
+            ) : null}
           </div>
         </form>
 
@@ -1020,7 +1014,7 @@ function DriverDashboard() {
 
       ) : null}
 
-      {activeTrip && isLocationActive ? (
+      {activeTrip?.status === 'in_progress' ? (
       <section className="driver-panel driver-step-card driver-end-step">
         <div className="driver-panel-header driver-step-header">
           <div>

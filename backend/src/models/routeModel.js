@@ -28,11 +28,23 @@ const findAll = async () => {
 
 const findByDriverId = async (driverId) => {
   const [rows] = await pool.execute(
-    'SELECT id, driver_id, nome, origem, destino, created_at FROM routes WHERE driver_id = ? ORDER BY created_at DESC',
+    `SELECT id, driver_id, nome, origem, destino, created_at
+    FROM routes
+    WHERE driver_id = ? OR driver_id IS NULL
+    ORDER BY driver_id IS NULL, created_at DESC`,
     [driverId]
   );
 
   return rows;
+};
+
+const assignToDriverIfUnassigned = async (id, driverId) => {
+  const [result] = await pool.execute(
+    'UPDATE routes SET driver_id = ? WHERE id = ? AND driver_id IS NULL',
+    [driverId, id]
+  );
+
+  return result.affectedRows;
 };
 
 const update = async (id, { nome, origem, destino }) => {
@@ -55,6 +67,7 @@ module.exports = {
   findById,
   findAll,
   findByDriverId,
+  assignToDriverIfUnassigned,
   update,
   remove,
 };

@@ -4,6 +4,10 @@ export function startTrip({ route_id, vehicle_id }) {
   return api.post('/trips/start', { route_id, vehicle_id }).then((response) => response.data)
 }
 
+export function getMyActiveTrip() {
+  return api.get('/trips/my-active').then((response) => response.data?.trip || null)
+}
+
 export function endTrip(id) {
   return api.patch(`/trips/${id}/end`).then((response) => response.data)
 }
