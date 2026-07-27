@@ -7,7 +7,7 @@ import { updateLocation } from '../../services/locationService'
 import { acceptRideRequest, getDriverRideRequests, rejectRideRequest } from '../../services/rideRequestService'
 import { createRoute, getRoutes } from '../../services/routeService'
 import { endTrip, getMyActiveTrip, startTrip, updateTripStatus } from '../../services/tripService'
-import { createVehicle, getVehicles, updateVehicleStatus } from '../../services/vehicleService'
+import { createVehicle, deleteVehicle, getVehicles, updateVehicle, updateVehicleStatus } from '../../services/vehicleService'
 
 const INITIAL_VEHICLE_FORM = {
   plate_number: '',
@@ -156,6 +156,7 @@ function DriverDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isVehicleFormOpen, setIsVehicleFormOpen] = useState(false)
   const [isVehicleSaving, setIsVehicleSaving] = useState(false)
+  const [editingVehicleId, setEditingVehicleId] = useState('')
   const [isTripStatusSaving, setIsTripStatusSaving] = useState(false)
   const [isRouteFormOpen, setIsRouteFormOpen] = useState(false)
   const [isRouteSaving, setIsRouteSaving] = useState(false)
@@ -305,7 +306,22 @@ function DriverDashboard() {
 
   function closeVehicleForm() {
     setIsVehicleFormOpen(false)
+    setEditingVehicleId('')
     setVehicleForm(INITIAL_VEHICLE_FORM)
+  }
+
+  function openCreateVehicleForm() {
+    clearMessages()
+    setEditingVehicleId('')
+    setVehicleForm(INITIAL_VEHICLE_FORM)
+    setIsVehicleFormOpen(true)
+  }
+
+  function openEditVehicleForm(vehicle) {
+    clearMessages()
+    setEditingVehicleId(String(vehicle.id))
+    setVehicleForm({ plate_number: vehicle.plate_number || '', model: vehicle.model || '', capacity: String(vehicle.capacity || '') })
+    setIsVehicleFormOpen(true)
   }
 
   function closeRouteForm() {
@@ -385,11 +401,15 @@ function DriverDashboard() {
     setIsVehicleSaving(true)
 
     try {
-      const result = await createVehicle({
+      const payload = {
         plate_number: vehicleForm.plate_number.trim(),
         model: vehicleForm.model.trim(),
         capacity: Number(vehicleForm.capacity),
-      })
+      }
+      const currentVehicle = vehicles.find((vehicle) => String(vehicle.id) === editingVehicleId)
+      const result = editingVehicleId
+        ? await updateVehicle(editingVehicleId, { ...payload, status: currentVehicle?.status || 'active' })
+        : await createVehicle(payload)
       closeVehicleForm()
       const vehiclesData = await refreshVehicles()
       const createdVehicleId = result?.vehicle?.id
@@ -404,7 +424,7 @@ function DriverDashboard() {
         setSelectedVehicleId(String(createdVehicleId))
       }
 
-      setSuccess(result?.message || 'Viatura adicionada com sucesso.')
+      setSuccess(result?.message || (editingVehicleId ? 'Viatura actualizada com sucesso.' : 'Viatura adicionada com sucesso.'))
     } catch (apiError) {
       setError(getApiErrorMessage(apiError))
     } finally {
@@ -412,6 +432,21 @@ function DriverDashboard() {
     }
   }
 
+  async function handleDeleteVehicle(vehicle) {
+    if (!window.confirm(`Tem certeza que deseja eliminar a viatura ${vehicle.plate_number}?`)) return
+    clearMessages()
+    setStatusUpdatingVehicleId(String(vehicle.id))
+    try {
+      const result = await deleteVehicle(vehicle.id)
+      await refreshVehicles()
+      if (String(selectedVehicleId) === String(vehicle.id)) setSelectedVehicleId('')
+      setSuccess(result?.message || 'Viatura eliminada com sucesso.')
+    } catch (apiError) {
+      setError(getApiErrorMessage(apiError))
+    } finally {
+      setStatusUpdatingVehicleId('')
+    }
+  }
   async function handleUpdateVehicleStatus(vehicleId, status) {
     clearMessages()
     setStatusUpdatingVehicleId(String(vehicleId))
@@ -738,6 +773,7 @@ function DriverDashboard() {
               <span>Minhas viaturas</span>
               <strong>{driverVehicles.length}</strong>
             </div>
+            <button className="button driver-add-vehicle-button" disabled={Boolean(activeTrip)} onClick={openCreateVehicleForm} type="button">Adicionar Viatura</button>
           </div>
 
           {driverVehicles.length ? (
@@ -767,6 +803,10 @@ function DriverDashboard() {
                       ))}
                     </select>
                   </label>
+                  <div className="driver-actions">
+                    <button className="button button-secondary" disabled={Boolean(vehicle.has_active_trip) || statusUpdatingVehicleId === String(vehicle.id)} onClick={() => openEditVehicleForm(vehicle)} type="button">Editar</button>
+                    <button className="button button-danger" disabled={Boolean(vehicle.has_active_trip) || statusUpdatingVehicleId === String(vehicle.id)} onClick={() => handleDeleteVehicle(vehicle)} type="button">Eliminar</button>
+                  </div>
                 </article>
               ))}
             </div>
@@ -1092,8 +1132,8 @@ function DriverDashboard() {
           >
             <div className="driver-panel-header">
               <div>
-                <span>Nova viatura</span>
-                <strong id="driver-vehicle-modal-title">Adicionar Viatura</strong>
+                <span>{editingVehicleId ? 'Editar viatura' : 'Nova viatura'}</span>
+                <strong id="driver-vehicle-modal-title">{editingVehicleId ? 'Editar Viatura' : 'Adicionar Viatura'}</strong>
               </div>
               <button
                 className="driver-modal-close"
@@ -1147,7 +1187,7 @@ function DriverDashboard() {
 
             <div className="driver-actions">
               <button className="button driver-add-vehicle-button" disabled={isVehicleSaving} type="submit">
-                {isVehicleSaving ? 'A guardar...' : 'Guardar viatura'}
+                {isVehicleSaving ? 'A guardar...' : (editingVehicleId ? 'Guardar alterações' : 'Guardar viatura')}
               </button>
               <button
                 className="button button-secondary"

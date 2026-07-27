@@ -37,7 +37,9 @@ const findAll = async () => {
 
 const findByDriverId = async (driverId) => {
   const [rows] = await pool.execute(
-    'SELECT id, driver_id, plate_number, model, capacity, status, created_at, updated_at FROM vehicles WHERE driver_id = ? ORDER BY created_at DESC',
+    `SELECT v.id, v.driver_id, v.plate_number, v.model, v.capacity, v.status, v.created_at, v.updated_at,
+      EXISTS(SELECT 1 FROM trips t WHERE t.vehicle_id = v.id AND t.status = 'in_progress') AS has_active_trip
+    FROM vehicles v WHERE v.driver_id = ? ORDER BY v.created_at DESC`,
     [driverId]
   );
   return rows;

@@ -9,12 +9,7 @@ function LandingPage() {
           Lili Transport
         </Link>
         <div className="nav-actions">
-          <Link className="text-link" to="/login">
-            Entrar
-          </Link>
-          <Link className="button button-small" to="/register">
-            Criar conta
-          </Link>
+      
         </div>
       </nav>
 
