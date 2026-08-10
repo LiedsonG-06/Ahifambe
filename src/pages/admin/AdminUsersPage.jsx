@@ -6,7 +6,7 @@ import AdminTable from './AdminTable'
 import { formatDate, getApiErrorMessage, valueOrDash } from './adminUtils'
 
 function AdminUsersPage() {
-  const { user: currentUser } = useAuth()
+  const { token, user: currentUser } = useAuth()
   const [users, setUsers] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [actionUserId, setActionUserId] = useState(null)
@@ -61,8 +61,6 @@ function AdminUsersPage() {
   }, [])
 
   const runUserAction = (user, action, successMessage) => {
-    const token = localStorage.getItem('ahifambe_token')
-
     if (!token) {
       setError('Sessao expirada. Faz login novamente para executar esta accao.')
       setSuccess('')

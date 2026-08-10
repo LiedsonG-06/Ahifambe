@@ -8,10 +8,10 @@ const startServer = async () => {
     console.log(`MySQL connected to database "${env.db.database}"`);
 
     app.listen(env.port, () => {
-      console.log(`Ahifambe API running on port ${env.port}`);
+      console.log(`LiliTransport API running on port ${env.port}`);
     });
   } catch (error) {
-    console.error('Failed to start Ahifambe API:', error.message);
+    console.error('Failed to start  LiliTransport API:', error.message);
     process.exit(1);
   }
 };
