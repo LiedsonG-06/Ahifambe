@@ -10,5 +10,5 @@ module.exports={
  db:{host:process.env.DB_HOST||'localhost',port:numberValue('DB_PORT',3306),user:process.env.DB_USER||'root',password:process.env.DB_PASSWORD||'',database:process.env.DB_NAME||'ahifambe_db'},
  jwt:{secret:required('JWT_SECRET'),expiresIn:process.env.JWT_EXPIRES_IN||'1d',algorithm:'HS256'},
  bcryptSaltRounds:numberValue('BCRYPT_SALT_ROUNDS',10),corsOrigins,
- authRateLimit:{windowMs:numberValue('AUTH_RATE_LIMIT_WINDOW_MS',900000),max:numberValue('AUTH_RATE_LIMIT_MAX',20)},
+ authRateLimit:{windowMs:numberValue('AUTH_RATE_LIMIT_WINDOW_MS',9000000),max:numberValue('AUTH_RATE_LIMIT_MAX',20)},
 };
